@@ -1,10 +1,9 @@
 from moderator.models import ClassifierState, Word
 from spambayes.classifier import Classifier
-from spambayes.hammie import Hammie
 
 
 class DjangoClassifier(Classifier):
-    def __init__(self):
+    def __init__(self, conf=None):
         Classifier.__init__(self)
         # Retrieve classifier state from DB.
         state = self.get_state()
@@ -58,5 +57,3 @@ class DjangoClassifier(Classifier):
                 spam_count=record.spamcount,
                 ham_count=record.hamcount
             )
-
-classifier = Hammie(bayes=DjangoClassifier(), mode='w')
