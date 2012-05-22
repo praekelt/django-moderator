@@ -8,7 +8,7 @@ from moderator.models import ClassifiedComment, ClassifierState, Word
 class DjangoClassifierTestCase(TestCase):
 
     def setUp(self):
-        from moderator.classifier import DjangoClassifier
+        from moderator.storage import DjangoClassifier
         self.classifier = DjangoClassifier()
 
     def test_init(self):
@@ -105,6 +105,13 @@ class ManagementCommandTestCase(TestCase):
         self.utils = utils
 
     def test_classifycomments(self):
+        # Reset words and counts to zero
+        from moderator.classifier import classifier
+        classifier.bayes.nspam = 0
+        classifier.bayes.nham = 0
+        classifier.store()
+        Word.objects.all().delete()
+
         # Initial comment setup.
         spam_comment = Comment.objects.create(content_type_id=1, \
                 site_id=1, comment="very bad spam")
@@ -146,15 +153,12 @@ class UtilsTestCase(TestCase):
         self.utils = utils
 
     def test_train(self):
+        # Reset words and counts to zero
         from moderator.classifier import classifier
-        # Reset counts to zero
         classifier.bayes.nspam = 0
         classifier.bayes.nham = 0
         classifier.store()
-
         Word.objects.all().delete()
-        self.failIf(Word.objects.all(), \
-                "Internal check, no words should exist now")
 
         self.failUnlessEqual(classifier.bayes.nham, 0, \
                 "No ham has been trained yet, should be 0")
@@ -203,6 +207,13 @@ class UtilsTestCase(TestCase):
         self.failUnlessEqual(state.ham_count, 1)
 
     def test_get_class(self):
+        # Reset words and counts to zero.
+        from moderator.classifier import classifier
+        classifier.bayes.nspam = 0
+        classifier.bayes.nham = 0
+        classifier.store()
+        Word.objects.all().delete()
+
         # Initial comment setup.
         spam_comment = Comment.objects.create(content_type_id=1, \
                 site_id=1, comment="very bad spam")
