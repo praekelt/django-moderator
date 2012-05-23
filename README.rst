@@ -67,3 +67,4 @@ Once correctly configured you'll use the ``classifycomments`` management command
 
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
+
