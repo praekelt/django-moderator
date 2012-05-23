@@ -180,15 +180,18 @@ class RedisClassifierTestCase(BaseClassifierTestCase, TestCase):
 class ManagementCommandTestCase(TestCase):
     def setUp(self):
         from moderator import utils
-        self.utils = utils
-
-    def test_classifycomments(self):
-        # Reset words and counts to zero
         from moderator.classifier import classifier
+        self.utils = utils
+        # Reset words and counts
+        classifier.bayes.redis.flushdb()
         classifier.bayes.nspam = 0
         classifier.bayes.nham = 0
         classifier.store()
         Word.objects.all().delete()
+        ClassifiedComment.objects.all().delete()
+        Comment.objects.all().delete()
+
+    def test_classifycomments(self):
 
         # Initial comment setup.
         spam_comment = Comment.objects.create(content_type_id=1, \
@@ -222,6 +225,51 @@ class ManagementCommandTestCase(TestCase):
         # Comment containing words not previously trained should be
         # classed as unsure.
         ClassifiedComment.objects.get(comment=untrained_comment, cls='unsure')
+
+
+class ClassifiedCommentTestCase(TestCase):
+
+    def setUp(self):
+        from moderator.classifier import classifier
+        self.classifier = classifier
+
+    def test_save(self):
+        untrained_comment = Comment.objects.create(content_type_id=1, \
+                site_id=1, comment="foo bar")
+
+        # On initial classification create save no training should take place.
+        classified_comment = ClassifiedComment.objects.create(\
+                comment=untrained_comment, cls='unsure')
+        self.failIf(self.classifier.bayes.nspam)
+        self.failIf(self.classifier.bayes.nham)
+
+        # On subsequent save training should not take place if cls is unsure.
+        classified_comment.save()
+        self.failIf(self.classifier.bayes.nspam)
+        self.failIf(self.classifier.bayes.nham)
+
+        # On subsequent save training should take place on cls change.
+        classified_comment.cls = 'spam'
+        classified_comment.save()
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failIf(self.classifier.bayes.nham)
+
+        # On subsequent save training should not take place if
+        # cls is unchanged.
+        classified_comment.cls = 'spam'
+        classified_comment.save()
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failIf(self.classifier.bayes.nham)
+
+        # On subsequent save training should take place on cls change.
+        classified_comment.cls = 'ham'
+        classified_comment.save()
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failUnlessEqual(self.classifier.bayes.nham, 1)
+
+        # Should raise exception with unkown cls.
+        classified_comment.cls = 'unknown_cls'
+        self.assertRaises(Exception, classified_comment.save)
 
 
 class UtilsTestCase(TestCase):
