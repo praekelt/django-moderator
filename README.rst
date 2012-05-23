@@ -5,7 +5,7 @@ Django Moderator
 .. contents:: Contents
     :depth: 5
 
-``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unknown*, based on previous learning (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
+``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unknown*, based on previous training (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
 
 Comments classified as *unknown* have to be manually classified as either *spam* or *ham* via admin, thereby training the system to automatically classify similarly worded comments in future.
 
@@ -54,6 +54,14 @@ To use ``moderator.storage.RedisClassifier`` as your classifier storage backend 
         'SPAM_CUTOFF': 0.7,
     }
 
-You can aslo create your own backends, in which case take note that ``CLASSIFIER_CONFIG`` will be passed as keyword agruments to your backend's ``__init__`` method.
+You can aslo create your own backends, in which case take note that the content of ``CLASSIFIER_CONFIG`` will be passed as keyword agruments to your backend's ``__init__`` method.
+
+Usage
+-----
+
+Once correctly configured you can call the ``classifycomments`` management command to automatically classify comments as either *ham*, *spam* or *unsure* based on previous training, i.e.::
+
+    $ ./manage.py classifycomments
+
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
