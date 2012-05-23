@@ -40,5 +40,17 @@ Classifier Storage Backends
 .. note::
     ``moderator.storage.RedisClassifier`` is recommended for production environments as it should be much more performant than ``moderator.storage.DjangoClassifier``.
 
+To use ``moderator.storage.RedisClassifier`` as your classifier storage backend specify it in your ``MODERATOR`` setting, i.e.::
+
+    REDIS_SAMPLE_CONFIG = {
+        'CLASSIFIER': 'moderator.storage.RedisClassifier',
+        'CLASSIFIER_CONFIG': {
+            'host': 'localhost',
+            'port': 6379,
+        },
+        'HAM_CUTOFF': 0.3,
+        'SPAM_CUTOFF': 0.7,
+    }
+
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
