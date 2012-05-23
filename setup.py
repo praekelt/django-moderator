@@ -13,9 +13,11 @@ setup(
     dependency_links = [
     ],
     install_requires=[
+        'redis',
         'spambayes',
     ],
     tests_require=[
+        'fakeredis',
         'django-setuptest',
     ],
     test_suite="setuptest.SetupTestSuite",

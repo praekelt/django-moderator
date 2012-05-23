@@ -1,5 +1,6 @@
 from django.conf import settings
 from moderator.classifier import classifier
+from moderator.constants import DEFAULT_CONFIG
 
 
 def train(comment, is_spam):
@@ -13,8 +14,8 @@ def get_class(comment):
     except ZeroDivisionError:
         return 'unsure'
 
-    if score < getattr(settings, 'MODERATOR_HAM_CUTOFF', 0.3):
+    if score < getattr(settings, 'MODERATOR', DEFAULT_CONFIG)['HAM_CUTOFF']:
         return 'ham'
-    if score > getattr(settings, 'MODERATOR_SPAM_CUTOFF', 0.7):
+    if score > getattr(settings, 'MODERATOR', DEFAULT_CONFIG)['SPAM_CUTOFF']:
         return 'spam'
     return 'unsure'

@@ -13,3 +13,9 @@ INSTALLED_APPS = (
 
     'moderator',
 )
+
+MODERATOR = {
+    'CLASSIFIER': 'moderator.storage.RedisClassifier',
+    'HAM_CUTOFF': 0.3,
+    'SPAM_CUTOFF': 0.7,
+}

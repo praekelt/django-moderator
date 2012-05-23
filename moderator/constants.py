@@ -1,0 +1,25 @@
+DJANGO_SAMPLE_CONFIG = {
+    'CLASSIFIER': 'moderator.storage.DjangoClassifier',
+    'CLASSIFIER_CONFIG': {},
+    'HAM_CUTOFF': 0.3,
+    'SPAM_CUTOFF': 0.7,
+}
+
+REDIS_SAMPLE_CONFIG = {
+    'CLASSIFIER': 'moderator.storage.RedisClassifier',
+    'CLASSIFIER_CONFIG': {
+        'host': 'localhost',
+        'port': 6379,
+        'db': 0,
+        'password': None,
+        'socket_timeout': None,
+        'connection_pool': None,
+        'charset': 'utf-8',
+        'errors': 'strict',
+        'unix_socket_path': None,
+    },
+    'HAM_CUTOFF': 0.3,
+    'SPAM_CUTOFF': 0.7,
+}
+
+DEFAULT_CONFIG = DJANGO_SAMPLE_CONFIG
