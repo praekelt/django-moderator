@@ -59,7 +59,7 @@ You can aslo create your own backends, in which case take note that the content 
 Usage
 -----
 
-Once correctly configured you can call the ``classifycomments`` management command to automatically classify comments as either *ham*, *spam* or *unsure* based on previous training, i.e.::
+Once correctly configured you'll use the ``classifycomments`` management command to automatically classify comments as either *ham*, *spam* or *unsure* based on previous training, i.e.::
 
     $ ./manage.py classifycomments
 
