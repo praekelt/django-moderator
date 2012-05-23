@@ -42,7 +42,7 @@ Classifier Storage Backends
 
 To use ``moderator.storage.RedisClassifier`` as your classifier storage backend specify it in your ``MODERATOR`` setting, i.e.::
 
-    REDIS_SAMPLE_CONFIG = {
+    MODERATOR = {
         'CLASSIFIER': 'moderator.storage.RedisClassifier',
         'CLASSIFIER_CONFIG': {
             'host': 'localhost',
@@ -54,5 +54,6 @@ To use ``moderator.storage.RedisClassifier`` as your classifier storage backend 
         'SPAM_CUTOFF': 0.7,
     }
 
+You can aslo create your own backends, in which case take note that ``CLASSIFIER_CONFIG`` will be passed as keyword agruments to your backend's ``__init__`` method.
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
