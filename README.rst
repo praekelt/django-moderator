@@ -63,5 +63,7 @@ Once correctly configured you'll use the ``classifycomments`` management command
 
     $ ./manage.py classifycomments
 
+*Unsure* comments can be manually classified as either *ham* or *spam* via the `CLassified comments <http://localhost:8000/admin/moderator/classifiedcomment/>`_ page in admin. 
+
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
