@@ -23,7 +23,7 @@ Installation
 
 #. Add ``moderator`` to your ``INSTALLED_APPS`` setting.
 
-#. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also at what levels classification will take place::
+#. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also classification thresholds::
    
     MODERATOR = {
         'CLASSIFIER': 'moderator.storage.DjangoClassifier',
@@ -31,9 +31,10 @@ Installation
         'SPAM_CUTOFF': 0.7,
     }
 
+   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than 0.3 during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than 0.7 during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*.
 
-Storage Backends
-----------------
+CLassifier Storage Backends
+---------------------------
 ``django-moderator`` includes two SpamBayes_ storage backends, ``moderator.storage.DjangoClassifier`` and ``moderator.storage.RedisClassifier`` respectively. 
 
 .. note::
