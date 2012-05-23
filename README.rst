@@ -31,7 +31,7 @@ Installation
         'SPAM_CUTOFF': 0.7,
     }
 
-   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting manual user classification. ``HAM_CUTOFF`` and ``SPAM_CUTOFF`` can be ommited in which case the default cuttofs are ``0.3`` and ``0.7`` respectively.
+   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting manual user classification. ``HAM_CUTOFF`` and ``SPAM_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3`` and ``0.7`` respectively.
 
 Classifier Storage Backends
 ---------------------------
