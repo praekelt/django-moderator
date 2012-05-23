@@ -1,15 +1,21 @@
 from django.contrib import admin
-from moderator.models import ClassifiedComment, Word
+from django.template import defaultfilters
+from moderator.models import ClassifiedComment
 
 
 class ClassifiedCommentAdmin(admin.ModelAdmin):
-    list_display = ('cls', 'comment', )
-    list_display_links = ('comment', )
+    list_display = ('cls', 'comment_text', 'removed')
+    list_display_links = ('removed', )
     list_editable = ('cls', )
-
-
-class WordAdmin(admin.ModelAdmin):
-    list_display = ('word', 'spam_count', 'ham_count')
+    list_filter = ('cls',)
+    
+    def comment_text(self, obj):
+        return defaultfilters.linebreaks(obj.comment.comment)
+    comment_text.short_description = 'Comment'
+    comment_text.allow_tags = True
+    
+    def removed(self, obj):
+        return obj.comment.is_removed
+    removed.boolean = True
 
 admin.site.register(ClassifiedComment, ClassifiedCommentAdmin)
-admin.site.register(Word, WordAdmin)
