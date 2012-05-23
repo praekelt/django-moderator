@@ -14,6 +14,9 @@ RedisClassifier.redis_class = fakeredis.FakeRedis
 
 class BaseClassifierTestCase(object):
     def setUp(self):
+        if 'CLASSIFIER_CONFIG' not in self.config:
+            self.config['CLASSIFIER_CONFIG'] = {}
+
         self.classifier = self.classifier_class(\
                 **self.config['CLASSIFIER_CONFIG'])
         self.clear()

@@ -1,6 +1,5 @@
 DJANGO_SAMPLE_CONFIG = {
     'CLASSIFIER': 'moderator.storage.DjangoClassifier',
-    'CLASSIFIER_CONFIG': {},
     'HAM_CUTOFF': 0.3,
     'SPAM_CUTOFF': 0.7,
 }

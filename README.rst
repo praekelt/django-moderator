@@ -23,6 +23,15 @@ Installation
 
 #. Add ``moderator`` to your ``INSTALLED_APPS`` setting.
 
+#. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also at what levels classification will take place::
+   
+    MODERATOR = {
+        'CLASSIFIER': 'moderator.storage.DjangoClassifier',
+        'HAM_CUTOFF': 0.3,
+        'SPAM_CUTOFF': 0.7,
+    }
+
+
 Storage Backends
 ----------------
 ``django-moderator`` includes two SpamBayes_ storage backends, ``moderator.storage.DjangoClassifier`` and ``moderator.storage.RedisClassifier`` respectively. 
