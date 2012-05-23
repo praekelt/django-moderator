@@ -47,6 +47,8 @@ To use ``moderator.storage.RedisClassifier`` as your classifier storage backend 
         'CLASSIFIER_CONFIG': {
             'host': 'localhost',
             'port': 6379,
+            'db': 0,
+            'password': None,
         },
         'HAM_CUTOFF': 0.3,
         'SPAM_CUTOFF': 0.7,
