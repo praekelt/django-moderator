@@ -4,6 +4,7 @@ from django.db import models
 class ClassifiedComment(models.Model):
     comment = models.ForeignKey('comments.Comment')
     cls = models.CharField(
+        'Class',
         max_length=64,
         choices=(
             ('spam', 'Spam'),
@@ -12,10 +13,21 @@ class ClassifiedComment(models.Model):
         )
     )
 
+    class Meta:
+        ordering = ['-comment__submit_date',]
+
     def save(self, *args, **kwargs):
         created = not self.pk
         if not created:
             previous_cls = ClassifiedComment.objects.get(pk=self.pk).cls
+        if self.cls == 'spam':
+            # Remove comment.
+            self.comment.is_removed = True
+            self.comment.save()
+        if self.cls == 'ham':
+            # Display comment.
+            self.comment.is_removed = False
+            self.comment.save()
         super(ClassifiedComment, self).save(*args, **kwargs)
 
         # Don't train on initial creation to prevent circular training.
