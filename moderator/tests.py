@@ -1,12 +1,19 @@
 from unittest import TestCase
 
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.comments.models import Comment
 from django.core import management
+from django.template import Template, Context
+from django.test.client import RequestFactory
 import fakeredis
+from likes.middleware import SecretBallotUserIpUseragentMiddleware
+from likes.views import can_vote_test
 from moderator.constants import DJANGO_SAMPLE_CONFIG
 from moderator.models import ClassifiedComment, ClassifierState, Word
 from moderator.storage import DjangoClassifier, RedisClassifier
-
+from secretballot import views
+from secretballot.models import Vote
+        
 
 # Before we do anything else monkeypatch FakeRedis into RedisClassifier
 RedisClassifier.redis_class = fakeredis.FakeRedis
@@ -368,3 +375,59 @@ class UtilsTestCase(TestCase):
         # Comment containing words not previously trained should be
         # classed as unsure.
         self.failUnlessEqual(self.utils.get_class(untrained_comment), 'unsure')
+
+
+class InclusionTagsTestCase(TestCase):
+
+    def test_report_comment_abuse(self):
+        # Prepare context.
+        context = Context()
+        request = RequestFactory().get('/')
+        request.user = AnonymousUser()
+        request.META['HTTP_USER_AGENT'] = 'testing_agent'
+        request.secretballot_token = SecretBallotUserIpUseragentMiddleware().generate_token(request)
+        comment = Comment.objects.create(content_type_id=1, \
+                site_id=1, comment="abuse report testing comment")
+        context['request'] = request
+        context['comment'] = comment
+
+        # Without having actioned anything on the comment the Report Abuse action should be rendered.
+        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+        self.failUnless('Report Abuse' in out)
+
+
+        # Like a comment.
+        views.vote(
+            request,
+            content_type='.'.join((comment._meta.app_label, comment._meta.module_name)),
+            object_id=comment.id,
+            vote=1,
+            redirect_url='/',
+            can_vote_test=can_vote_test
+        )
+        
+        # With having liked a comment nothing should be rendered.
+        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+        self.failUnlessEqual(out, '\n')
+       
+        # Reset previous like and test it applied.
+        Vote.objects.all().delete()
+        
+        # Without having actioned anything on the comment the Report Abuse action should be rendered.
+        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+        self.failUnless('Report Abuse' in out)
+        
+       
+        # Dislike/report an abuse comment.
+        views.vote(
+            request,
+            content_type='.'.join((comment._meta.app_label, comment._meta.module_name)),
+            object_id=comment.id,
+            vote=-1,
+            redirect_url='/',
+            can_vote_test=can_vote_test
+        )
+        
+        # With having reported abuse a thank you note should be rendered.
+        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+        self.failUnless('Abuse Reported' in out)
