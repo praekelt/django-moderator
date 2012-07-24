@@ -9,7 +9,7 @@ Django Moderator
 
 Comments classified as *unknown* have to be manually classified as either *spam* or *ham* via admin, thereby training the system to automatically classify similarly worded comments in future.
 
-Comments classified as *spam* will have their ``is_removed`` field set to ``True`` and as such it will no longer be visible in comment listings.
+Comments classified as *spam* will have their ``is_removed`` field set to ``True`` and as such will no longer be visible in comment listings.
 
 Comments classified as *ham* will remain unchanged and as such will be visible in comment listings.
 
@@ -23,6 +23,8 @@ Installation
 
 #. Add ``moderator`` to your ``INSTALLED_APPS`` setting.
 
+#. To allow for up and down likes/votes on comments install ``django-likes`` as described `here <http://pypi.python.org/pypi/django-likes>`_.
+
 #. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also classification thresholds::
    
     MODERATOR = {
@@ -32,6 +34,7 @@ Installation
     }
 
    Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting manual user classification. ``HAM_CUTOFF`` and ``SPAM_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3`` and ``0.7`` respectively.
+
 
 Classifier Storage Backends
 ---------------------------
@@ -54,7 +57,7 @@ To use ``moderator.storage.RedisClassifier`` as your classifier storage backend 
         'SPAM_CUTOFF': 0.7,
     }
 
-You can aslo create your own backends, in which case take note that the content of ``CLASSIFIER_CONFIG`` will be passed as keyword agruments to your backend's ``__init__`` method.
+You can also create your own backends, in which case take note that the content of ``CLASSIFIER_CONFIG`` will be passed as keyword agruments to your backend's ``__init__`` method.
 
 Usage
 -----
