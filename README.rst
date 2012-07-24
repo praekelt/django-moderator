@@ -5,13 +5,13 @@ Django Moderator
 .. contents:: Contents
     :depth: 5
 
-``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unknown* based on training by users (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
+``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unknown*, based on training by users (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
 
-Users classify comments as *spam* using a *report abuse* mechanic, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unknown*, allowing staff users to be manually classified them via admin.
+Users classify comments as *spam* using a *report abuse* mechanic, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unknown*, allowing staff users to be manually classify them via admin.
 
 Comments classified as *spam* will have their ``is_removed`` field set to ``True`` and as such will no longer be visible in comment listings.
 
-Comments classified as *ham* will remain unchanged and as such will be visible in comment listings.
+Comments classified as *ham* or *unknown* will remain unchanged and as such will be visible in comment listings.
 
 ``django-moderator`` also implements a user friendly admin interface for efficiently moderating comments.
 
