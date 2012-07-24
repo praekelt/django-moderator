@@ -266,56 +266,6 @@ class ManagementCommandTestCase(TestCase):
         ClassifiedComment.objects.get(comment=untrained_comment, cls='unsure')
 
 
-class ClassifiedCommentTestCase(TestCase):
-
-    def setUp(self):
-        from moderator.classifier import classifier
-        self.classifier = classifier
-
-    def test_save(self):
-        untrained_comment = Comment.objects.create(
-            content_type_id=1,
-            site_id=1,
-            comment="foo bar"
-        )
-
-        # On initial classification create save no training should take place.
-        classified_comment = ClassifiedComment.objects.create(
-            comment=untrained_comment,
-            cls='unsure'
-        )
-        self.failIf(self.classifier.bayes.nspam)
-        self.failIf(self.classifier.bayes.nham)
-
-        # On subsequent save training should not take place if cls is unsure.
-        classified_comment.save()
-        self.failIf(self.classifier.bayes.nspam)
-        self.failIf(self.classifier.bayes.nham)
-
-        # On subsequent save training should take place on cls change.
-        classified_comment.cls = 'spam'
-        classified_comment.save()
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
-        self.failIf(self.classifier.bayes.nham)
-
-        # On subsequent save training should not take place if
-        # cls is unchanged.
-        classified_comment.cls = 'spam'
-        classified_comment.save()
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
-        self.failIf(self.classifier.bayes.nham)
-
-        # On subsequent save training should take place on cls change.
-        classified_comment.cls = 'ham'
-        classified_comment.save()
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
-        self.failUnlessEqual(self.classifier.bayes.nham, 1)
-
-        # Should raise exception with unkown cls.
-        classified_comment.cls = 'unknown_cls'
-        self.assertRaises(Exception, classified_comment.save)
-
-
 class UtilsTestCase(TestCase):
     def setUp(self):
         from moderator import utils
@@ -433,6 +383,110 @@ class UtilsTestCase(TestCase):
         # Comment containing words not previously trained should be
         # classed as unsure.
         self.failUnlessEqual(self.utils.get_class(untrained_comment), 'unsure')
+
+    def test_classify_comment(self):
+        spam_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="very bad spam"
+        )
+        spam_comment.total_downvotes = 0
+        ham_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome tasty ham"
+        )
+        ham_comment.total_downvotes = 0
+        unsure_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome spam"
+        )
+        unsure_comment.total_downvotes = 0
+        generic_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="foo bar"
+        )
+        generic_comment.total_downvotes = 0
+        abusive_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="abusive comment"
+        )
+        abusive_comment.total_downvotes = 3
+
+        # Without providing a class and user abuse reports and no existing
+        # training should create unsure classification and not train.
+        classified_comment = self.utils.classify_comment(generic_comment)
+        self.failIf(self.classifier.bayes.nspam)
+        self.failIf(self.classifier.bayes.nham)
+        self.failUnlessEqual(classified_comment.cls, 'unsure')
+
+        # Without providing a class but with user abuse reports less than
+        # cutoff should create unsure classification and not train.
+        generic_comment.total_downvotes = 2
+        classified_comment = self.utils.classify_comment(generic_comment)
+        self.failIf(self.classifier.bayes.nspam)
+        self.failIf(self.classifier.bayes.nham)
+        self.failUnlessEqual(classified_comment.cls, 'unsure')
+
+        # Without providing a class but with user abuse reports more or equal
+        # to cutoff should create spam classification and train.
+        abusive_comment.total_downvotes = 3
+        classified_comment = self.utils.classify_comment(abusive_comment)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failIf(self.classifier.bayes.nham)
+        self.failUnlessEqual(classified_comment.cls, 'spam')
+
+        # Providing ham class should create ham classification and training.
+        classified_comment = self.utils.classify_comment(ham_comment, 'ham')
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failUnlessEqual(self.classifier.bayes.nham, 1)
+        self.failUnlessEqual(classified_comment.cls, 'ham')
+
+        # Providing spam class should create spam classification and training.
+        classified_comment = self.utils.classify_comment(spam_comment, 'spam')
+        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nham, 1)
+        self.failUnlessEqual(classified_comment.cls, 'spam')
+
+        # Spammy comment should now be correctly classified automatically
+        # without any training.
+        comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="bad spam"
+        )
+        comment.total_downvotes = 0
+        classified_comment = self.utils.classify_comment(comment)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nham, 1)
+        self.failUnlessEqual(classified_comment.cls, 'spam')
+
+        # Hammy comment should now be correctly classified automatically
+        # without any training.
+        comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="tasty ham"
+        )
+        comment.total_downvotes = 0
+        classified_comment = self.utils.classify_comment(comment)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nham, 1)
+        self.failUnlessEqual(classified_comment.cls, 'ham')
+
+        # Hammy spammy comment should now be correctly classified automatically
+        # without any training.
+        classified_comment = self.utils.classify_comment(unsure_comment)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nham, 1)
+        self.failUnlessEqual(classified_comment.cls, 'unsure')
+
+        # Should raise exception with unkown cls.
+        self.assertRaises(Exception, self.utils.classify_comment,
+                          unsure_comment, 'unknown_cls')
 
 
 class InclusionTagsTestCase(TestCase):
