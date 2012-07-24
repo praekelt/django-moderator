@@ -1,13 +1,13 @@
 Django Moderator
 ================
-**Django Bayesian inference based comment moderation app.**
+**Django community trained Bayesian inference based comment moderation app.**
 
 .. contents:: Contents
     :depth: 5
 
-``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unknown*, based on previous training (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
+``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unknown* based on training by users (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
 
-Comments classified as *unknown* have to be manually classified as either *spam* or *ham* via admin, thereby training the system to automatically classify similarly worded comments in future.
+Users classify comments as *spam* using a *report abuse* mechanic, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unknown*, allowing staff users to be manually classified them via admin.
 
 Comments classified as *spam* will have their ``is_removed`` field set to ``True`` and as such will no longer be visible in comment listings.
 
@@ -23,7 +23,7 @@ Installation
 
 #. Add ``moderator`` to your ``INSTALLED_APPS`` setting.
 
-#. To allow for up and down likes/votes on comments install ``django-likes`` as described `here <http://pypi.python.org/pypi/django-likes>`_.
+#. Install and configure ``django-likes`` as described `here <http://pypi.python.org/pypi/django-likes>`_.
 
 #. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also classification thresholds::
    
