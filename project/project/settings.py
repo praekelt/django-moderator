@@ -166,3 +166,10 @@ LOGGING = {
         },
     }
 }
+
+MODERATOR = {
+    'CLASSIFIER': 'moderator.storage.DjangoClassifier',
+    'HAM_CUTOFF': 0.3,
+    'SPAM_CUTOFF': 0.7,
+    'ABUSE_CUTOFF': 1,
+}
