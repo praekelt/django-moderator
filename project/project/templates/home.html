@@ -1,0 +1,8 @@
+{% load comments likes_inclusion_tags moderator_inclusion_tags %}
+
+{% get_comment_list for user as comment_list %}
+{% for comment in comment_list %}
+    {{ comment }}
+    {% likes comment %}
+    {% report_comment_abuse comment %}
+{% endfor %}
