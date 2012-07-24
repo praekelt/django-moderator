@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.comments.models import Comment
+import secretballot
 
 
 class ClassifiedComment(models.Model):
@@ -63,3 +65,6 @@ class Word(models.Model):
     )
     spam_count = models.IntegerField()
     ham_count = models.IntegerField()
+
+# Enable voting on Comments (for negative votes/reporting abuse).
+secretballot.enable_voting_on(Comment)
