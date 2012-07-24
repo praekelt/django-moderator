@@ -13,7 +13,7 @@ setup(
     dependency_links = [
     ],
     install_requires=[
-        'django-likes',
+        'django-likes>=0.0.6',
         'redis',
         'spambayes',
     ],
