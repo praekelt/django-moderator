@@ -10,6 +10,7 @@ INSTALLED_APPS = (
     'django.contrib.comments',
     'django.contrib.contenttypes',
     'django.contrib.sites',
+    'secretballot',
 
     'moderator',
 )
@@ -19,3 +20,5 @@ MODERATOR = {
     'HAM_CUTOFF': 0.3,
     'SPAM_CUTOFF': 0.7,
 }
+
+ROOT_URLCONF = 'test_urls'
