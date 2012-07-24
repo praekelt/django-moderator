@@ -13,7 +13,7 @@ from moderator.models import ClassifiedComment, ClassifierState, Word
 from moderator.storage import DjangoClassifier, RedisClassifier
 from secretballot import views
 from secretballot.models import Vote
-        
+
 
 # Before we do anything else monkeypatch FakeRedis into RedisClassifier
 RedisClassifier.redis_class = fakeredis.FakeRedis
@@ -24,11 +24,13 @@ class BaseClassifierTestCase(object):
         if 'CLASSIFIER_CONFIG' not in self.config:
             self.config['CLASSIFIER_CONFIG'] = {}
 
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
         self.clear()
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
 
     def test_init(self):
         # State's counts should be loaded in the classifier.
@@ -40,17 +42,24 @@ class BaseClassifierTestCase(object):
         self.classifier.nspam = 10
         self.classifier.nham = 20
         self.classifier.store()
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
         self.failUnlessEqual(self.classifier.nspam, 10)
         self.failUnlessEqual(self.classifier.nham, 20)
 
     def test_store(self):
         state = self.classifier.get_state()
-        self.failIfEqual(state.spam_count, 50, \
-                'Internal checking test is not testing existing values')
-        self.failIfEqual(state.ham_count, 100, \
-                'Internal checking test is not testing existing values')
+        self.failIfEqual(
+            state.spam_count,
+            50,
+            'Internal checking test is not testing existing values'
+        )
+        self.failIfEqual(
+            state.ham_count,
+            100,
+            'Internal checking test is not testing existing values'
+        )
 
         # On store classifier counts should be saved to DB.
         self.classifier.nspam = 50
@@ -71,14 +80,18 @@ class DjangoClassifierTestCase(BaseClassifierTestCase, TestCase):
 
     def test_get_state(self):
         # States are unique for type.
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
-        self.classifier = self.classifier_class(\
-                **self.config['CLASSIFIER_CONFIG'])
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
+        self.classifier = self.classifier_class(
+            **self.config['CLASSIFIER_CONFIG']
+        )
         self.failUnlessEqual(ClassifierState.objects.all().count(), 1)
 
         # On initial creation of state counts are 0.
@@ -97,8 +110,10 @@ class DjangoClassifierTestCase(BaseClassifierTestCase, TestCase):
     def test_wordinfoget(self):
         # Without any existing words should not create Word,
         # just return word_info with zero counts.
-        self.failIf(Word.objects.all(), \
-                "Internal check, no words should exist now")
+        self.failIf(
+            Word.objects.all(),
+            "Internal check, no words should exist now"
+        )
         word_info = self.classifier._wordinfoget('test')
         self.failUnlessEqual(word_info.spamcount, 0)
         self.failUnlessEqual(word_info.hamcount, 0)
@@ -111,8 +126,10 @@ class DjangoClassifierTestCase(BaseClassifierTestCase, TestCase):
 
     def test_wordinfoset(self):
         # Without any existing words should create Word with count from record.
-        self.failIf(Word.objects.all(), \
-                "Internal check, no words should exist now")
+        self.failIf(
+            Word.objects.all(),
+            "Internal check, no words should exist now"
+        )
         word_info = self.classifier.WordInfoClass()
         word_info.spamcount = 200
         word_info.hamcount = 500
@@ -204,14 +221,26 @@ class ManagementCommandTestCase(TestCase):
     def test_classifycomments(self):
 
         # Initial comment setup.
-        spam_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="very bad spam")
-        ham_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="awesome tasty ham")
-        unsure_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="awesome spam")
-        untrained_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="foo bar")
+        spam_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="very bad spam"
+        )
+        ham_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome tasty ham"
+        )
+        unsure_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome spam"
+        )
+        untrained_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="foo bar"
+        )
 
         # Initial training
         self.utils.train(spam_comment, True)
@@ -219,8 +248,8 @@ class ManagementCommandTestCase(TestCase):
 
         management.call_command('classifycomments')
 
-        self.failUnlessEqual(ClassifiedComment.objects.all().count(), 4, \
-                "We should now have 4 classified comments")
+        self.failUnlessEqual(ClassifiedComment.objects.all().count(), 4,
+                             "We should now have 4 classified comments")
 
         # Comment previously trained as spam should be classed as spam.
         ClassifiedComment.objects.get(comment=spam_comment, cls='spam')
@@ -244,12 +273,17 @@ class ClassifiedCommentTestCase(TestCase):
         self.classifier = classifier
 
     def test_save(self):
-        untrained_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="foo bar")
+        untrained_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="foo bar"
+        )
 
         # On initial classification create save no training should take place.
-        classified_comment = ClassifiedComment.objects.create(\
-                comment=untrained_comment, cls='unsure')
+        classified_comment = ClassifiedComment.objects.create(
+            comment=untrained_comment,
+            cls='unsure'
+        )
         self.failIf(self.classifier.bayes.nspam)
         self.failIf(self.classifier.bayes.nham)
 
@@ -295,13 +329,16 @@ class UtilsTestCase(TestCase):
         self.classifier.store()
 
     def test_train(self):
-        self.failUnlessEqual(self.classifier.bayes.nham, 0, \
-                "No ham has been trained yet, should be 0")
-        self.failUnlessEqual(self.classifier.bayes.nspam, 0, \
-                "No spam has been trained yet, should be 0")
+        self.failUnlessEqual(self.classifier.bayes.nham, 0,
+                             "No ham has been trained yet, should be 0")
+        self.failUnlessEqual(self.classifier.bayes.nspam, 0,
+                             "No spam has been trained yet, should be 0")
 
-        comment = Comment.objects.create(content_type_id=1, site_id=1, \
-                comment="very bad spam")
+        comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="very bad spam"
+        )
         self.utils.train(comment, True)
 
         # Now we should have word info for each word in the comment,
@@ -316,13 +353,16 @@ class UtilsTestCase(TestCase):
         self.failUnlessEqual(word_info.spamcount, 1)
         self.failUnlessEqual(word_info.hamcount, 0)
 
-        self.failUnlessEqual(self.classifier.bayes.nham, 0, \
-                "No ham has been trained yet, should still be 0")
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1, \
-                "Spam has been trained, should be 1")
+        self.failUnlessEqual(self.classifier.bayes.nham, 0,
+                             "No ham has been trained yet, should still be 0")
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1,
+                             "Spam has been trained, should be 1")
 
-        comment = Comment.objects.create(content_type_id=1, site_id=1, \
-                comment="awesome tasty ham")
+        comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome tasty ham"
+        )
         self.utils.train(comment, False)
 
         # Now we should have word info for each word in the comment,
@@ -337,10 +377,16 @@ class UtilsTestCase(TestCase):
         self.failUnlessEqual(word_info.spamcount, 0)
         self.failUnlessEqual(word_info.hamcount, 1)
 
-        self.failUnlessEqual(self.classifier.bayes.nham, 1, \
-                "Ham has been trained, should still 1")
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1, \
-                "No more spam has been trained, should still be 1")
+        self.failUnlessEqual(
+            self.classifier.bayes.nham,
+            1,
+            "Ham has been trained, should still 1"
+        )
+        self.failUnlessEqual(
+            self.classifier.bayes.nspam,
+            1,
+            "No more spam has been trained, should still be 1"
+        )
 
         # Training should store state
         state = self.classifier.bayes.get_state()
@@ -349,14 +395,26 @@ class UtilsTestCase(TestCase):
 
     def test_get_class(self):
         # Initial comment setup.
-        spam_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="very bad spam")
-        ham_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="awesome tasty ham")
-        unsure_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="awesome spam")
-        untrained_comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="foo bar")
+        spam_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="very bad spam"
+        )
+        ham_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome tasty ham"
+        )
+        unsure_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="awesome spam"
+        )
+        untrained_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="foo bar"
+        )
 
         # Initial training
         self.utils.train(spam_comment, True)
@@ -385,49 +443,59 @@ class InclusionTagsTestCase(TestCase):
         request = RequestFactory().get('/')
         request.user = AnonymousUser()
         request.META['HTTP_USER_AGENT'] = 'testing_agent'
-        request.secretballot_token = SecretBallotUserIpUseragentMiddleware().generate_token(request)
-        comment = Comment.objects.create(content_type_id=1, \
-                site_id=1, comment="abuse report testing comment")
+        request.secretballot_token = SecretBallotUserIpUseragentMiddleware().\
+            generate_token(request)
+        comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="abuse report testing comment"
+        )
         context['request'] = request
         context['comment'] = comment
 
-        # Without having actioned anything on the comment the Report Abuse action should be rendered.
-        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+        # Without having actioned anything on the comment the
+        # Report Abuse action should be rendered.
+        out = Template("{% load moderator_inclusion_tags %}"
+                       "{% report_comment_abuse comment %}").render(context)
         self.failUnless('Report Abuse' in out)
-
 
         # Like a comment.
         views.vote(
             request,
-            content_type='.'.join((comment._meta.app_label, comment._meta.module_name)),
+            content_type='.'.join((comment._meta.app_label,
+                                   comment._meta.module_name)),
             object_id=comment.id,
             vote=1,
             redirect_url='/',
             can_vote_test=can_vote_test
         )
-        
+
         # With having liked a comment nothing should be rendered.
-        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+        out = Template("{% load moderator_inclusion_tags %}"
+                       "{% report_comment_abuse comment %}").render(context)
         self.failUnlessEqual(out, '\n')
-       
+
         # Reset previous like and test it applied.
         Vote.objects.all().delete()
-        
-        # Without having actioned anything on the comment the Report Abuse action should be rendered.
-        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+
+        # Without having actioned anything on the comment the
+        # Report Abuse action should be rendered.
+        out = Template("{% load moderator_inclusion_tags %}"
+                       "{% report_comment_abuse comment %}").render(context)
         self.failUnless('Report Abuse' in out)
-        
-       
+
         # Dislike/report an abuse comment.
         views.vote(
             request,
-            content_type='.'.join((comment._meta.app_label, comment._meta.module_name)),
+            content_type='.'.join((comment._meta.app_label,
+                                   comment._meta.module_name)),
             object_id=comment.id,
             vote=-1,
             redirect_url='/',
             can_vote_test=can_vote_test
         )
-        
-        # With having reported abuse a thank you note should be rendered.
-        out  = Template("{% load moderator_inclusion_tags %}{% report_comment_abuse comment %}").render(context)
+
+        # With having reported abuse an acknowledgement should be rendered.
+        out = Template("{% load moderator_inclusion_tags %}"
+                       "{% report_comment_abuse comment %}").render(context)
         self.failUnless('Abuse Reported' in out)

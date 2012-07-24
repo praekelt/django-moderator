@@ -16,7 +16,7 @@ class ClassifiedComment(models.Model):
     )
 
     class Meta:
-        ordering = ['-comment__submit_date',]
+        ordering = ['-comment__submit_date', ]
 
     def save(self, *args, **kwargs):
         created = not self.pk

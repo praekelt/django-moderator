@@ -5,14 +5,15 @@ from likes.utils import can_vote
 register = template.Library()
 
 
-@register.inclusion_tag('moderator/inclusion_tags/report_comment_abuse.html', takes_context=True)
+@register.inclusion_tag('moderator/inclusion_tags/report_comment_abuse.html',
+                        takes_context=True)
 def report_comment_abuse(context, obj):
     """
     Checks whether a user can report abuse (has not liked comment previously)
     or has reported abuse previously and renders appropriate response.
     """
     request = context['request']
-    
+
     can_report = can_vote(obj, request.user, request)
     previously_reported = False
     if not can_report:

@@ -89,10 +89,10 @@ class RedisClassifier(Classifier):
 
         spam = self.redis.get(self.state_keys['spam'])
         ham = self.redis.get(self.state_keys['ham'])
-        if spam == None:
+        if spam is None:
             self.redis.set(self.state_keys['spam'], '0')
             spam = self.redis.get(self.state_keys['spam'])
-        if ham == None:
+        if ham is None:
             self.redis.set(self.state_keys['ham'], '0')
             ham = self.redis.get(self.state_keys['ham'])
 
@@ -114,9 +114,9 @@ class RedisClassifier(Classifier):
         """
         spam_count = self.redis.get('%s_spam_count' % word)
         ham_count = self.redis.get('%s_ham_count' % word)
-        if spam_count == None:
+        if spam_count is None:
             spam_count = 0
-        if ham_count == None:
+        if ham_count is None:
             ham_count = 0
 
         word_info = self.WordInfoClass()
