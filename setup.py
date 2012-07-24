@@ -9,7 +9,7 @@ setup(
     author_email='dev@praekelt.com',
     license='BSD',
     url='http://github.com/praekelt/django-moderator',
-    packages = find_packages(),
+    packages = find_packages(exclude=['project',]),
     dependency_links = [
     ],
     install_requires=[
