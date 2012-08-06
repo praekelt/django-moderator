@@ -30,8 +30,8 @@ def classify_comment(comment, cls=None):
     (either ham or spam).
 
     If no class is provided a class is determined based on user abuse reports.
-    If determined to be spam the Baysian inference classifier is trained with
-    the comment as such.
+    If indicated to be spam by users the Baysian inference classifier is
+    trained with the comment as such.
 
     If user abuse reports does not clearly classify a comment as spam a class
     is determined using Baysian inference. In this case no training occurs to
