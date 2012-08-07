@@ -24,3 +24,9 @@ REDIS_SAMPLE_CONFIG = {
 }
 
 DEFAULT_CONFIG = DJANGO_SAMPLE_CONFIG
+
+CLASS_CHOICES = (
+    ('spam', 'Spam'),
+    ('ham', 'Ham'),
+    ('unsure', 'Unsure'),
+)
