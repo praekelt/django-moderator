@@ -29,6 +29,9 @@ def classify_comment(comment, cls=None):
     Trains Baysian inference classifier with comment and provided class
     (either ham or spam).
 
+    If 'unsure' class is provided no training occures, the comment's class
+    is simply set as such.
+
     If no class is provided a class is determined based on user abuse reports.
     If indicated to be spam by users the Baysian inference classifier is
     trained with the comment as such.
@@ -38,7 +41,7 @@ def classify_comment(comment, cls=None):
     prevent circular training.
 
     Returns a newly created or updated ClassifiedComment object.
-    As a side effect also set is_removed field of comment based on class.
+    As a side effect also sets is_removed field of comment based on class.
     """
     from moderator.models import ClassifiedComment
 
@@ -61,6 +64,11 @@ def classify_comment(comment, cls=None):
         train(comment, is_spam=False)
         comment.is_removed = False
         comment.save()
+        classified_comment.cls = cls
+        classified_comment.save()
+        return classified_comment
+
+    if cls == 'unsure' and classified_comment.cls != 'unsure':
         classified_comment.cls = cls
         classified_comment.save()
         return classified_comment
