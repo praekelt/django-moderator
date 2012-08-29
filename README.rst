@@ -5,11 +5,13 @@ Django Moderator
 .. contents:: Contents
     :depth: 5
 
-``django-moderator`` integrates Django's comments framework with SpamBayes_ to automatically classify comments into three categories, *ham*, *spam* or *unsure*, based on training by users (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
+``django-moderator`` integrates Django's comments framework with SpamBayes_ to classify comments into one of four categories, *ham*, *spam*, *reported* or *unsure*, based on training by users (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
 
-Users classify comments as *spam* using a *report abuse* mechanic, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unsure*, allowing staff users to manually classify them via admin.
+Users classify comments as *reported* using a *report abuse* mechanic. Staff users can then classify these *reported* comments as *ham* or *spam*, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unsure*, allowing staff users to manually classify as well them via admin.
 
 Comments classified as *spam* will have their ``is_removed`` field set to ``True`` and as such will no longer be visible in comment listings.
+
+Comments *reported* by users will have their ``is_removed`` field set to ``True`` and as such will no longer be visible in comment listings.
 
 Comments classified as *ham* or *unsure* will remain unchanged and as such will be visible in comment listings.
 
@@ -31,9 +33,10 @@ Installation
         'CLASSIFIER': 'moderator.storage.DjangoClassifier',
         'HAM_CUTOFF': 0.3,
         'SPAM_CUTOFF': 0.7,
+        'ABUSE_CUTOFF': 3,
     }
 
-   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting manual user classification. ``HAM_CUTOFF`` and ``SPAM_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3`` and ``0.7`` respectively.
+   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting further manual staff user classification. Additionally an ``ABUSE_CUTOFF`` value of ``3`` as in this example specifies that any comment receiving ``3`` or more abuse reports will be classified as *reported*, awaiting further manual staff user classification. ``HAM_CUTOFF``, ``SPAM_CUTOFF`` and ``ABUSE_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3``, ``0.7`` and ``3`` respectively. 
 
 
 Classifier Storage Backends
@@ -62,11 +65,11 @@ You can also create your own backends, in which case take note that the content 
 Usage
 -----
 
-Once correctly configured you'll use the ``classifycomments`` management command to automatically classify comments as either *ham*, *spam* or *unsure* based on previous training, i.e.::
+Once correctly configured you can use the ``classifycomments`` management command (recommended via a cronjob) to automatically classify comments as either *ham*, *spam* or *unsure* based on previous training, i.e.::
 
     $ ./manage.py classifycomments
 
-*Unsure* comments can be manually classified as either *ham* or *spam* via the `Classified comments <http://localhost:8000/admin/moderator/classifiedcomment/>`_ page in admin. 
+*Unsure* or *reported* comments can be manually classified as either *ham* or *spam* via an inline *classifed comments* fieldset available on each respective comment's admin change view.
 
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
