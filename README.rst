@@ -44,7 +44,7 @@ Classifier Storage Backends
 ``django-moderator`` includes two SpamBayes_ storage backends, ``moderator.storage.DjangoClassifier`` and ``moderator.storage.RedisClassifier`` respectively. 
 
 .. note::
-    ``moderator.storage.RedisClassifier`` is recommended for production environments as it should be much more performant than ``moderator.storage.DjangoClassifier``.
+    ``moderator.storage.RedisClassifier`` is recommended for production environments as it should be much faster than ``moderator.storage.DjangoClassifier``.
 
 To use ``moderator.storage.RedisClassifier`` as your classifier storage backend specify it in your ``MODERATOR`` setting, i.e.::
 
