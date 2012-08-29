@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.comments.models import Comment
+from django.contrib.contenttypes.models import ContentType
 from django.core import management
 from django.template import Template, Context
 from django.test.client import RequestFactory
@@ -390,69 +391,82 @@ class UtilsTestCase(TestCase):
             site_id=1,
             comment="very bad spam"
         )
-        spam_comment.total_downvotes = 0
         ham_comment = Comment.objects.create(
             content_type_id=1,
             site_id=1,
             comment="awesome tasty ham"
         )
-        ham_comment.total_downvotes = 0
         unsure_comment = Comment.objects.create(
             content_type_id=1,
             site_id=1,
-            comment="awesome spam"
+            comment="tasty spam"
         )
-        unsure_comment.total_downvotes = 0
         generic_comment = Comment.objects.create(
             content_type_id=1,
             site_id=1,
             comment="foo bar"
         )
-        generic_comment.total_downvotes = 0
         abusive_comment = Comment.objects.create(
             content_type_id=1,
             site_id=1,
             comment="abusive comment"
         )
-        abusive_comment.total_downvotes = 3
+        for i in range(0, 3):
+            Vote.objects.create(
+                content_type=ContentType.objects.get_for_model(Comment),
+                object_id=abusive_comment.id,
+                token=i,
+                vote=-1
+            )
 
-        # Without providing a class and user abuse reports and no existing
-        # training should create unsure classification and not train.
-        classified_comment = self.utils.classify_comment(generic_comment)
+        # Providing unsure should create unsure classification without
+        # training.
+        classified_comment = self.utils.classify_comment(
+            generic_comment,
+            'unsure'
+        )
         self.failIf(self.classifier.bayes.nspam)
         self.failIf(self.classifier.bayes.nham)
         self.failUnlessEqual(classified_comment.cls, 'unsure')
 
-        # Without providing a class but with user abuse reports less than
-        # cutoff should create unsure classification and not train.
-        generic_comment.total_downvotes = 2
-        classified_comment = self.utils.classify_comment(generic_comment)
+        # Providing reported should create reported classification without
+        # training, comment should be removed.
+        classified_comment = self.utils.classify_comment(
+            generic_comment,
+            'reported'
+        )
         self.failIf(self.classifier.bayes.nspam)
         self.failIf(self.classifier.bayes.nham)
-        self.failUnlessEqual(classified_comment.cls, 'unsure')
+        self.failUnlessEqual(classified_comment.cls, 'reported')
+        self.failUnless(classified_comment.comment.is_removed)
 
         # Without providing a class but with user abuse reports more or equal
-        # to cutoff should create spam classification and train.
-        abusive_comment.total_downvotes = 3
+        # to cutoff should create reported classification without training,
+        # comment should be removed.
         classified_comment = self.utils.classify_comment(abusive_comment)
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 0)
         self.failIf(self.classifier.bayes.nham)
-        self.failUnlessEqual(classified_comment.cls, 'spam')
+        self.failUnlessEqual(classified_comment.cls, 'reported')
+        self.failUnless(classified_comment.comment.is_removed)
 
-        # Providing ham class should create ham classification and training.
+        # Providing ham class should create ham classification and training,
+        # comment should not be removed.
         classified_comment = self.utils.classify_comment(ham_comment, 'ham')
-        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 0)
         self.failUnlessEqual(self.classifier.bayes.nham, 1)
         self.failUnlessEqual(classified_comment.cls, 'ham')
+        self.failIf(classified_comment.comment.is_removed)
 
-        # Providing spam class should create spam classification and training.
+        # Providing spam class should create spam classification and training,
+        # comment should be removed.
         classified_comment = self.utils.classify_comment(spam_comment, 'spam')
-        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
         self.failUnlessEqual(self.classifier.bayes.nham, 1)
         self.failUnlessEqual(classified_comment.cls, 'spam')
+        self.failUnless(classified_comment.comment.is_removed)
 
         # Spammy comment should now be correctly classified automatically
-        # without any training.
+        # without any training, should be removed.
         comment = Comment.objects.create(
             content_type_id=1,
             site_id=1,
@@ -460,12 +474,13 @@ class UtilsTestCase(TestCase):
         )
         comment.total_downvotes = 0
         classified_comment = self.utils.classify_comment(comment)
-        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
         self.failUnlessEqual(self.classifier.bayes.nham, 1)
         self.failUnlessEqual(classified_comment.cls, 'spam')
+        self.failUnless(classified_comment.comment.is_removed)
 
         # Hammy comment should now be correctly classified automatically
-        # without any training.
+        # without any training, should not be removed.
         comment = Comment.objects.create(
             content_type_id=1,
             site_id=1,
@@ -473,16 +488,18 @@ class UtilsTestCase(TestCase):
         )
         comment.total_downvotes = 0
         classified_comment = self.utils.classify_comment(comment)
-        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
         self.failUnlessEqual(self.classifier.bayes.nham, 1)
         self.failUnlessEqual(classified_comment.cls, 'ham')
+        self.failIf(classified_comment.comment.is_removed)
 
         # Hammy spammy comment should now be correctly classified automatically
-        # without any training.
+        # as unsure without any training, should not be removed.
         classified_comment = self.utils.classify_comment(unsure_comment)
-        self.failUnlessEqual(self.classifier.bayes.nspam, 2)
+        self.failUnlessEqual(self.classifier.bayes.nspam, 1)
         self.failUnlessEqual(self.classifier.bayes.nham, 1)
         self.failUnlessEqual(classified_comment.cls, 'unsure')
+        self.failIf(classified_comment.comment.is_removed)
 
         # Should raise exception with unkown cls.
         self.assertRaises(Exception, self.utils.classify_comment,
