@@ -58,6 +58,7 @@ To use ``moderator.storage.RedisClassifier`` as your classifier storage backend 
         },
         'HAM_CUTOFF': 0.3,
         'SPAM_CUTOFF': 0.7,
+        'ABUSE_CUTOFF': 3,
     }
 
 You can also create your own backends, in which case take note that the content of ``CLASSIFIER_CONFIG`` will be passed as keyword agruments to your backend's ``__init__`` method.
