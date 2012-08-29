@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from moderator.classifier import classifier
 from moderator.constants import DEFAULT_CONFIG
+from secretballot.models import Vote
 
 
 def train(comment, is_spam):
@@ -27,25 +29,28 @@ def get_class(comment):
 def classify_comment(comment, cls=None):
     """
     Trains Baysian inference classifier with comment and provided class
-    (either ham or spam).
+    (either 'ham' or 'spam').
 
     If 'unsure' class is provided no training occures, the comment's class
     is simply set as such.
 
-    If no class is provided a class is determined based on user abuse reports.
-    If indicated to be spam by users the Baysian inference classifier is
-    trained with the comment as such.
+    If 'reported' class is provided no training occures, the comment's class
+    is simply set as such and removed.
 
-    If user abuse reports does not clearly classify a comment as spam a class
-    is determined using Baysian inference. In this case no training occurs to
-    prevent circular training.
+    If no class is provided a lookup is done to see if the comment has been
+    reported by users as abusive. If indicated as abusive class is set
+    as 'reported', with no training occuring.
+
+    If a comment is not reported as abusive by users and without a class being
+    provided a class is determined using Baysian inference. In this case no
+    training occurs to prevent circular training.
 
     Returns a newly created or updated ClassifiedComment object.
     As a side effect also sets is_removed field of comment based on class.
     """
     from moderator.models import ClassifiedComment
 
-    if cls not in ['spam', 'ham', 'unsure', None]:
+    if cls not in ['spam', 'ham', 'unsure', 'reported', None]:
         raise Exception("Unrecognized classifications.")
 
     classified_comment, created = ClassifiedComment.objects.get_or_create(
@@ -73,11 +78,24 @@ def classify_comment(comment, cls=None):
         classified_comment.save()
         return classified_comment
 
+    if cls == 'reported' and classified_comment.cls != 'reported':
+        comment.is_removed = True
+        comment.save()
+        classified_comment.cls = cls
+        classified_comment.save()
+        return classified_comment
+
     if cls is None:
-        if comment.total_downvotes >= getattr(settings, 'MODERATOR',
-                                              DEFAULT_CONFIG)['ABUSE_CUTOFF']:
-            cls = 'spam'
-            train(comment, is_spam=True)
+        if Vote.objects.filter(
+            content_type=ContentType.objects.get_for_model(comment),
+            object_id=comment.id,
+            vote=-1
+        ).count() >= getattr(
+            settings,
+            'MODERATOR',
+            DEFAULT_CONFIG
+        )['ABUSE_CUTOFF']:
+            cls = 'reported'
             comment.is_removed = True
             comment.save()
             classified_comment.cls = cls
