@@ -33,6 +33,9 @@ class ClassifiedComment(models.Model):
     class Meta:
         ordering = ['-comment__submit_date', ]
 
+    def __unicode__(self):
+        return self.cls.title()
+
 
 class ClassifierState(models.Model):
     """
