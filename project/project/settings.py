@@ -136,6 +136,7 @@ INSTALLED_APPS = (
     'project',
     'secretballot',
     'likes',
+    'south',
 )
 
 # A sample logging configuration. The only tangible logging
