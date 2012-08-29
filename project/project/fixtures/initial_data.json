@@ -1,0 +1,1 @@
+[{"pk": 1, "model": "comments.comment", "fields": {"comment": "This is a test comment.", "user_url": "", "submit_date": "2012-07-24T13:40:08Z", "ip_address": "", "object_pk": "1", "site": 1, "is_removed": false, "user": 1, "content_type": 3, "is_public": true, "user_name": "", "user_email": ""}}]

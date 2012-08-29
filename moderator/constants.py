@@ -2,6 +2,7 @@ DJANGO_SAMPLE_CONFIG = {
     'CLASSIFIER': 'moderator.storage.DjangoClassifier',
     'HAM_CUTOFF': 0.3,
     'SPAM_CUTOFF': 0.7,
+    'ABUSE_CUTOFF': 3,
 }
 
 REDIS_SAMPLE_CONFIG = {
@@ -19,6 +20,14 @@ REDIS_SAMPLE_CONFIG = {
     },
     'HAM_CUTOFF': 0.3,
     'SPAM_CUTOFF': 0.7,
+    'ABUSE_CUTOFF': 3,
 }
 
 DEFAULT_CONFIG = DJANGO_SAMPLE_CONFIG
+
+CLASS_CHOICES = (
+    ('reported', 'Reported'),
+    ('spam', 'Spam'),
+    ('ham', 'Ham'),
+    ('unsure', 'Unsure'),
+)
