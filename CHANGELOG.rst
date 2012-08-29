@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.0.4 (2012-08-29)
+------------------
+#. Migration to add moderator_commentreply model.
+
 0.0.3 (2012-08-29)
 ------------------
 #. Include templates.
