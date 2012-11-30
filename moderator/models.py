@@ -118,6 +118,26 @@ class CommentReply(models.Model):
         return "%s: %s..." % (self.reply_comment.name,
                               self.reply_comment.comment[:50])
 
+# Proxy models for admin display.
+class HamComment(Comment):
+    class Meta:
+        proxy=True
+
+
+class ReportedComment(Comment):
+    class Meta:
+        proxy=True
+
+
+class SpamComment(Comment):
+    class Meta:
+        proxy=True
+
+
+class UnsureComment(Comment):
+    class Meta:
+        proxy=True
+
 
 @receiver(post_delete, sender=CommentReply)
 def comment_reply_post_delete_handler(sender, instance, **kwargs):
