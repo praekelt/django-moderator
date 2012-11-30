@@ -12,6 +12,10 @@ class DjangoClassifier(Classifier):
         self.nspam = state.spam_count
         self.nham = state.ham_count
 
+    def clear(self):
+        ClassifierState.objects.all().delete()
+        Word.objects.all().delete()
+
     def get_state(self):
         """
         Retrieves classifier state from DB.
@@ -77,6 +81,9 @@ class RedisClassifier(Classifier):
         state = self.get_state()
         self.nspam = state.spam_count
         self.nham = state.ham_count
+
+    def clear(self):
+        self.redis.flushall()
 
     def get_state(self):
         """
