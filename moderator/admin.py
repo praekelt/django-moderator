@@ -5,9 +5,7 @@ from django.contrib.comments.admin import CommentsAdmin as DjangoCommentsAdmin
 from django.core.urlresolvers import reverse
 from django.forms.models import BaseInlineFormSet
 from django.template import defaultfilters
-from moderator import constants
-from moderator.models import CannedReply, ClassifiedComment, CommentReply
-from moderator import utils
+from moderator import constants, models, utils
 
 
 class ClassificationListFilter(SimpleListFilter):
@@ -28,7 +26,7 @@ class ClassificationListFilter(SimpleListFilter):
 class CommentReplyInline(admin.StackedInline):
     extra = 0
     exclude = ['reply_comment', ]
-    model = CommentReply
+    model = models.CommentReply
     fk_name = 'replied_to_comment'
 
 
@@ -40,16 +38,49 @@ class ClassifiedCommentInlineFormSet(BaseInlineFormSet):
 class ClassifiedCommentInline(admin.StackedInline):
     formset = ClassifiedCommentInlineFormSet
     extra = 0
-    model = ClassifiedComment
+    model = models.ClassifiedComment
 
     def has_add_permission(self, request):
         return False
 
 
+class CommentProxyAdmin(admin.ModelAdmin):
+    ordering = ('-submit_date',)
+    def queryset(self, request):
+        return self.model.objects.filter(id__in=models.ClassifiedComment.objects.filter(cls=self.cls))
+
+
+class HamCommentAdmin(CommentProxyAdmin):
+    cls = 'ham'
+
+
+class ReportedCommentAdmin(CommentProxyAdmin):
+    cls = 'reported'
+
+
+class SpamCommentAdmin(CommentProxyAdmin):
+    cls = 'spam'
+
+
+class UnsureCommentAdmin(CommentProxyAdmin):
+    cls = 'unsure'
+
+admin.site.register(models.HamComment, HamCommentAdmin)
+admin.site.register(models.ReportedComment, ReportedCommentAdmin)
+admin.site.register(models.SpamComment, SpamCommentAdmin)
+admin.site.register(models.UnsureComment, UnsureCommentAdmin)
+
+
 class CommentAdmin(DjangoCommentsAdmin):
-    list_display = ('comment_text', 'content', 'user', 'submit_date',
-                    'classification', 'moderator_replied',)
-    list_filter = ('submit_date', ClassificationListFilter)
+    list_display = (
+        'comment_text',
+        'content',
+        'user',
+        'submit_date',
+        'classification',
+        'moderator_replied',
+    )
+    list_filter = (ClassificationListFilter, )
     inlines = [
         ClassifiedCommentInline,
         CommentReplyInline,
@@ -77,16 +108,15 @@ class CommentAdmin(DjangoCommentsAdmin):
     def classification(self, obj):
         try:
             cls = obj.classifiedcomment_set.get().cls
-        except ClassifiedComment.DoesNotExist:
-            cls = utils.classify_comment(obj).cls
-        return cls.title()
-        return obj.classifiedcomment_set.get().cls.title()
+            return cls.title()
+        except models.ClassifiedComment.DoesNotExist:
+            return 'Unclassified'
 
     def queryset(self, request):
         qs = super(CommentAdmin, self).queryset(request)
         return qs.filter(reply_comment_set__isnull=True)
 
 
-admin.site.register(CannedReply)
+admin.site.register(models.CannedReply)
 admin.site.unregister(Comment)
 admin.site.register(Comment, CommentAdmin)
