@@ -9,6 +9,8 @@ def train(comment, is_spam):
     classifier.train(comment.comment, is_spam)
     classifier.store()
 
+def clear():
+    classifier.bayes.clear()
 
 def get_class(comment):
     """
