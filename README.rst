@@ -7,7 +7,7 @@ Django Moderator
 
 ``django-moderator`` integrates Django's comments framework with SpamBayes_ to classify comments into one of four categories, *ham*, *spam*, *reported* or *unsure*, based on training by users (see Paul Graham's `A Plan for Spam <http://www.paulgraham.com/spam.html>`_ for some background).
 
-Users classify comments as *reported* using a *report abuse* mechanic. Staff users can then classify these *reported* comments as *ham* or *spam*, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unsure*, allowing staff users to manually classify as well them via admin.
+Users classify comments as *reported* using a *report abuse* mechanic. Staff users can then classify these *reported* comments as *ham* or *spam*, thereby training the algorithm to automatically classify similarly worded comments in future. Additionally comments the algorithm fails to clearly classify as either *ham* or *spam* will be classified as *unsure*, allowing staff users to manually classify them as well via admin.
 
 Comments classified as *spam* will have their ``is_removed`` field set to ``True`` and as such will no longer be visible in comment listings.
 
@@ -65,12 +65,19 @@ You can also create your own backends, in which case take note that the content 
 
 Usage
 -----
+Once correctly configured you should use the ``traincommentclassifier`` management command to train the Bayesian inference system using a sample of existing comment objects (comments with ``is_removed`` as ``True`` will be trained as *spam*, *ham* otherwise), i.e.::
 
-Once correctly configured you can use the ``classifycomments`` management command (recommended via a cronjob) to automatically classify comments as either *ham*, *spam* or *unsure* based on previous training, i.e.::
+    $ ./manage.py traincommentclassifier
+
+.. note::
+    The ``traincommentclassifier`` command will remove/clear any existing classification data and start from scratch.
+
+
+Then you can periodically use the ``classifycomments`` management command to automatically classify comments as either *ham*, *spam*, *reported* or *unsure* based on user reports and previous training, i.e.::
 
     $ ./manage.py classifycomments
 
-*Unsure* or *reported* comments can be manually classified as either *ham* or *spam* via an inline *classifed comments* fieldset available on each respective comment's admin change view.
+Comments can be manually classified as either *ham* or *spam* via admin list view actions.
 
 
 .. _SpamBayes: http://spambayes.sourceforge.net/
