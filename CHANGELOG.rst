@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.0.5 (2012-12-03)
+------------------
+#. Added ``traincommentclassifier`` management command.
+#. Admin proxy model additions to clearly group comments.
+#. Various optimizations.
+
 0.0.4 (2012-08-29)
 ------------------
 #. Migration to add moderator_commentreply model.
