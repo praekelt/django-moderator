@@ -110,9 +110,12 @@ class CommentReply(models.Model):
         super(CommentReply, self).save(*args, **kwargs)
 
         # Set comment classification to ham.
-        classified_comment = self.reply_comment.classifiedcomment_set.all()[0]
-        classified_comment.cls = 'ham'
-        classified_comment.save()
+        classified_comment, created = ClassifiedComment.objects.get_or_create(
+            comment=self.reply_comment, defaults={'cls': 'ham'}
+        )
+        if created:
+            classified_comment.cls = 'ham'
+            classified_comment.save()
 
     def __unicode__(self):
         return "%s: %s..." % (self.reply_comment.name,
@@ -143,11 +146,6 @@ class UnsureComment(Comment):
 def comment_reply_post_delete_handler(sender, instance, **kwargs):
     instance.reply_comment.delete()
 
-
-@receiver(post_save, sender=Comment)
-def comment_post_save_handler(sender, instance, **kwargs):
-    from moderator import utils
-    utils.classify_comment(instance, cls='unsure')
 
 # Enable voting on Comments (for negative votes/reporting abuse).
 secretballot.enable_voting_on(Comment)
