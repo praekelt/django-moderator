@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.0.6 (2012-01-24)
+------------------
+#. Added site field for canned replies and filter accordingly on comment admin views.
+
 0.0.5 (2012-12-03)
 ------------------
 #. Added ``traincommentclassifier`` management command.
@@ -22,4 +26,4 @@ Changelog
 0.0.1 (2012-05-23)
 ------------------
 #. Initial release
-   
+
