@@ -2,8 +2,14 @@ from django.contrib import admin
 from django.contrib.comments.admin import CommentsAdmin as DjangoCommentsAdmin
 from django.contrib.comments.models import Comment
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.template import defaultfilters
 from moderator import models, utils
+
+
+class CannedReplyAdmin(admin.ModelAdmin):
+    list_display = ('comment', 'site', )
+    list_filter = ('site', )
 
 
 class CommentReplyInline(admin.StackedInline):
@@ -11,6 +17,15 @@ class CommentReplyInline(admin.StackedInline):
     exclude = ['reply_comment', ]
     model = models.CommentReply
     fk_name = 'replied_to_comment'
+
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        field = super(CommentReplyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+        if db_field.name == 'canned_reply':
+            comment_site = Comment.objects.get(id=request.path.split('/')[-2]).site
+            field.queryset = field.queryset.filter(Q(site=comment_site) | Q(site__isnull=True))
+
+        return field
 
 
 class CommentAdmin(DjangoCommentsAdmin):
@@ -100,7 +115,7 @@ class UnsureCommentAdmin(CommentProxyAdmin):
     actions = ['mark_ham', 'mark_spam', ]
 
 
-admin.site.register(models.CannedReply)
+admin.site.register(models.CannedReply, CannedReplyAdmin)
 admin.site.unregister(Comment)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(models.HamComment, HamCommentAdmin)

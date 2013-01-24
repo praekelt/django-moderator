@@ -14,6 +14,11 @@ COMMENT_MAX_LENGTH = getattr(settings, 'COMMENT_MAX_LENGTH', 3000)
 
 class CannedReply(models.Model):
     comment = models.TextField(max_length=COMMENT_MAX_LENGTH)
+    site = models.ForeignKey(
+        'sites.Site',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         verbose_name_plural = 'Canned replies'
