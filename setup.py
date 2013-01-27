@@ -13,6 +13,7 @@ setup(
     dependency_links=[
     ],
     install_requires=[
+        'django-apptemplates',
         'django-likes>=0.0.6',
         'redis',
         'spambayes',
