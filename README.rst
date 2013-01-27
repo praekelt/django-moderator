@@ -25,10 +25,12 @@ Installation
 
 #. Add ``moderator`` to your ``INSTALLED_APPS`` setting.
 
-#. Install and configure ``django-likes`` as described `here <http://pypi.python.org/pypi/django-likes>`_.
+#. Configure ``django-apptemplates`` as described `here <http://pypi.python.org/pypi/django-apptemplates>`_.
+
+#. Configure ``django-likes`` as described `here <http://pypi.python.org/pypi/django-likes>`_.
 
 #. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also classification thresholds::
-   
+
     MODERATOR = {
         'CLASSIFIER': 'moderator.storage.DjangoClassifier',
         'HAM_CUTOFF': 0.3,
@@ -36,12 +38,12 @@ Installation
         'ABUSE_CUTOFF': 3,
     }
 
-   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting further manual staff user classification. Additionally an ``ABUSE_CUTOFF`` value of ``3`` as in this example specifies that any comment receiving ``3`` or more abuse reports will be classified as *reported*, awaiting further manual staff user classification. ``HAM_CUTOFF``, ``SPAM_CUTOFF`` and ``ABUSE_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3``, ``0.7`` and ``3`` respectively. 
+   Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting further manual staff user classification. Additionally an ``ABUSE_CUTOFF`` value of ``3`` as in this example specifies that any comment receiving ``3`` or more abuse reports will be classified as *reported*, awaiting further manual staff user classification. ``HAM_CUTOFF``, ``SPAM_CUTOFF`` and ``ABUSE_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3``, ``0.7`` and ``3`` respectively.
 
 
 Classifier Storage Backends
 ---------------------------
-``django-moderator`` includes two SpamBayes_ storage backends, ``moderator.storage.DjangoClassifier`` and ``moderator.storage.RedisClassifier`` respectively. 
+``django-moderator`` includes two SpamBayes_ storage backends, ``moderator.storage.DjangoClassifier`` and ``moderator.storage.RedisClassifier`` respectively.
 
 .. note::
     ``moderator.storage.RedisClassifier`` is recommended for production environments as it should be much faster than ``moderator.storage.DjangoClassifier``.
