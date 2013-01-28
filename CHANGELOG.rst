@@ -1,11 +1,11 @@
 Changelog
 =========
 
-0.0.7 (2012-01-28)
+0.0.7 (2013-01-28)
 ------------------
 #. Added moderate admin change view tool.
 
-0.0.6 (2012-01-24)
+0.0.6 (2013-01-24)
 ------------------
 #. Added site field for canned replies and filter accordingly on comment admin views.
 
