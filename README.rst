@@ -25,8 +25,6 @@ Installation
 
 #. Add ``moderator`` to your ``INSTALLED_APPS`` setting.
 
-#. Configure ``django-apptemplates`` as described `here <http://pypi.python.org/pypi/django-apptemplates>`_.
-
 #. Configure ``django-likes`` as described `here <http://pypi.python.org/pypi/django-likes>`_.
 
 #. Add a ``MODERATOR`` setting to your project's ``settings.py`` file. This setting specifies what classifier storage backend to use (see below) and also classification thresholds::
@@ -40,6 +38,7 @@ Installation
 
    Specifically a ``HAM_CUTOFF`` value of ``0.3`` as in this example specifies that any comment scoring less than ``0.3`` during Bayesian inference will be classified as *ham*.  A ``SPAM_CUTOFF`` value of ``0.7`` as in this example specifies that any comment scoring more than ``0.7`` during Bayesian inference will be classified as *spam*. Anything between ``0.3`` and ``0.7`` will be classified as *unsure*, awaiting further manual staff user classification. Additionally an ``ABUSE_CUTOFF`` value of ``3`` as in this example specifies that any comment receiving ``3`` or more abuse reports will be classified as *reported*, awaiting further manual staff user classification. ``HAM_CUTOFF``, ``SPAM_CUTOFF`` and ``ABUSE_CUTOFF`` can be ommited in which case the default cutoffs are ``0.3``, ``0.7`` and ``3`` respectively.
 
+#. Optionally, if you want an additional **moderate** object tool on admin change views, configure ``django-apptemplates`` as described `here <http://pypi.python.org/pypi/django-apptemplates>`_, include ``moderator`` as an ``INSTALLED_APP`` before ``django.contrib.admin``, and add ``moderator.admin.AdminModeratorMixin`` as a base class to those instantiate those admin classes you want the tool available for.
 
 Classifier Storage Backends
 ---------------------------
