@@ -1,0 +1,30 @@
+{% extends "admin:admin/change_list.html" %}
+{% load i18n admin_urls %}
+{% load url from future %}
+
+{% block extrahead %}
+{{ block.super }}
+    <script type="text/javascript">
+        function dismissAddAnotherPopup(win, newId, newRepr) {
+            // Override of builtin dismissAddAnotherPopup to
+            // display comment reply text.
+            console.log(newId)
+            var repl_id = windowname_to_id(win.name);
+            repl_element = django.jQuery("#" + repl_id).parent();
+            repl_element.html(newRepr.split(": ")[1]);
+            win.close();
+        }
+    </script>
+{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_label|capfirst|escape }}</a>
+&rsaquo; {% if orig_has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; {% trans 'Moderate' %} {{ original|truncatewords:"18" }}
+</div>
+{% endblock %}
+{% endif %}
+
