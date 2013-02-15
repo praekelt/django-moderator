@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.comments.models import Comment
 from django.db import models
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import m2m_changed, pre_delete
 from django.dispatch import receiver
 from moderator import constants
 import secretballot
@@ -77,79 +77,84 @@ class CommentReply(models.Model):
         blank=True,
         null=True,
     )
-    replied_to_comment = models.ForeignKey(
+    replied_to_comments = models.ManyToManyField(
         'comments.Comment',
-        related_name='replied_to_comment_set'
+        related_name='replied_to_comments_set',
+        help_text='Comment on which this reply applies.'
     )
-    reply_comment = models.ForeignKey(
+    reply_comments = models.ManyToManyField(
         'comments.Comment',
-        related_name='reply_comment_set'
+        related_name='reply_comments_set',
+        blank=True,
+        null=True,
+        help_text='Generated reply comments.'
     )
 
     class Meta:
         verbose_name_plural = 'Comment replies'
 
-    def save(self, *args, **kwargs):
-        replied_to_comment = self.replied_to_comment
+    def __unicode__(self):
+        return "%s: %s..." % (
+            self.user.username,
+            self.comment[:50]
+        )
 
-        if self.canned_reply:
-            comment_text = self.canned_reply.comment
+
+# Proxy models for admin display.
+class HamComment(Comment):
+    class Meta:
+        proxy = True
+
+
+class ReportedComment(Comment):
+    class Meta:
+        proxy = True
+
+
+class SpamComment(Comment):
+    class Meta:
+        proxy = True
+
+
+class UnsureComment(Comment):
+    class Meta:
+        proxy = True
+
+
+@receiver(pre_delete, sender=CommentReply)
+def comment_reply_pre_delete_handler(sender, instance, **kwargs):
+    """
+    Deletes all generated reply comments.
+    """
+    instance.reply_comments.all().delete()
+
+
+@receiver(m2m_changed, sender=CommentReply.replied_to_comments.through)
+def comment_reply_post_create_handler(sender, instance, action, model, pk_set, using, **kwargs):
+    for replied_to_comment in instance.replied_to_comments.all():
+        if instance.canned_reply:
+            comment_text = instance.canned_reply.comment
         else:
-            comment_text = self.comment
+            comment_text = instance.comment
 
-        try:
-            reply_comment = self.reply_comment
-            reply_comment.user = self.user
-            reply_comment.comment = comment_text
-            reply_comment.save()
-        except Comment.DoesNotExist:
-            self.reply_comment = Comment.objects.create(
+        #try:
+        #    reply_comment = instance.reply_comment
+        #    reply_comment.user = instance.user
+        #    reply_comment.comment = comment_text
+        #    reply_comment.save()
+        #except AttributeError, Comment.DoesNotExist:
+        instance.reply_comments.add(
+            Comment.objects.create(
                 comment=comment_text,
                 content_type=replied_to_comment.content_type,
                 object_pk=replied_to_comment.object_pk,
                 site=replied_to_comment.site,
                 submit_date=replied_to_comment.submit_date +
                 timedelta(seconds=1),
-                user=self.user
+                user=instance.user
             )
-        super(CommentReply, self).save(*args, **kwargs)
-
-        # Set comment classification to ham.
-        classified_comment, created = ClassifiedComment.objects.get_or_create(
-            comment=self.reply_comment, defaults={'cls': 'ham'}
         )
-        if created:
-            classified_comment.cls = 'ham'
-            classified_comment.save()
-
-    def __unicode__(self):
-        return "%s: %s..." % (self.reply_comment.name,
-                              self.reply_comment.comment[:50])
-
-# Proxy models for admin display.
-class HamComment(Comment):
-    class Meta:
-        proxy=True
-
-
-class ReportedComment(Comment):
-    class Meta:
-        proxy=True
-
-
-class SpamComment(Comment):
-    class Meta:
-        proxy=True
-
-
-class UnsureComment(Comment):
-    class Meta:
-        proxy=True
-
-
-@receiver(post_delete, sender=CommentReply)
-def comment_reply_post_delete_handler(sender, instance, **kwargs):
-    instance.reply_comment.delete()
+        #    instance.save()
 
 
 # Enable voting on Comments (for negative votes/reporting abuse).
