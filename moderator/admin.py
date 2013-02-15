@@ -26,9 +26,9 @@ class CannedReplyAdmin(admin.ModelAdmin):
 
 class CommentReplyInline(admin.StackedInline):
     extra = 1
-    exclude = ['reply_comment', ]
+    exclude = ['reply_comments', ]
     model = models.CommentReply
-    fk_name = 'replied_to_comment'
+    fk_name = 'replied_to_comments'
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         """
@@ -44,8 +44,16 @@ class CommentReplyInline(admin.StackedInline):
 
 
 class CommentReplyAdmin(admin.ModelAdmin):
-    raw_id_fields = ("replied_to_comment", )
-    exclude = ("reply_comment", )
+    raw_id_fields = ("replied_to_comments", )
+    exclude = ("reply_comments", )
+
+    def response_add(self, request, obj, post_url_continue=None):
+        if 'admin_redirect' in request.session:
+            redirect = request.session['admin_redirect']
+            del request.session["admin_redirect"]
+            return HttpResponseRedirect(redirect)
+        else:
+            return super(CommentReplyAdmin, self).response_add(request, obj, post_url_continue)
 
 
 class CommentAdmin(DjangoCommentsAdmin):
@@ -56,16 +64,48 @@ class CommentAdmin(DjangoCommentsAdmin):
         '_user',
         'submit_date',
     )
-    inlines = [
-        CommentReplyInline,
-    ]
+    actions = ['mark_spam', 'mark_ham', 'add_moderator_reply']
 
     def queryset(self, request):
         """
         Exclude replies from listing since they are displayed inline as part of listing.
+
+        For proxy models with cls apptribute limit comments to those classified as cls.
         """
         qs = super(CommentAdmin, self).queryset(request)
-        return qs.filter(reply_comment_set__isnull=True)
+        qs = qs.filter(reply_comments_set__isnull=True)
+        cls = getattr(self, 'cls', None)
+        if cls:
+            qs = qs.filter(classifiedcomment__cls=self.cls)
+        return qs
+
+    def add_moderator_reply(self, modeladmin, request, queryset):
+        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        request.session["admin_redirect"] = request.get_full_path()
+        return HttpResponseRedirect(reverse('admin:moderator_commentreply_add') + '?replied_to_comments=%s' % ",".join(selected))
+    add_moderator_reply.short_description = "Add moderator reply"
+
+    def mark_spam(self, modeladmin, request, queryset):
+        for comment in queryset:
+            utils.classify_comment(comment, cls='spam')
+        self.message_user(request, "%s comment(s) successfully marked as spam." % queryset.count())
+    mark_spam.short_description = "Mark selected comments as spam"
+
+    def mark_ham(self, modeladmin, request, queryset):
+        for comment in queryset:
+            utils.classify_comment(comment, cls='ham')
+        self.message_user(request, "%s comment(s) successfully marked as ham." % queryset.count())
+    mark_ham.short_description = "Mark selected comments as ham"
+
+    def get_actions(self, request):
+        actions = {}
+        for action in self.actions:
+            actions[action] = (
+                getattr(self, action),
+                action,
+                getattr(self, action).short_description,
+            )
+        return actions
 
     def get_changelist(self, request):
         """
@@ -96,18 +136,18 @@ class CommentAdmin(DjangoCommentsAdmin):
     content.allow_tags = True
 
     def moderator_reply(self, obj):
-        replies = obj.replied_to_comment_set.all()
+        replies = obj.replied_to_comments_set.all()
         if replies:
             reply = replies[0]
             change_icon = '<img src="%s" alt="change" />' % static('admin/img/icon_changelink.gif')
             return '%s <a href="%s" target="_blank">%s</a>' % (
                 change_icon,
                 reverse('admin:moderator_commentreply_change', args=(reply.id, )),
-                reply.reply_comment.comment
+                reply.comment
             )
         else:
             add_icon = '<img src="%s" alt="add" />' % static('admin/img/icon_addlink.gif')
-            return '%s <a href="%s?replied_to_comment=%s" class="add-another" id="moderator_reply_comment_%s" onclick="return showAddAnotherPopup(this);">Add reply</a>' % (
+            return '%s <a href="%s?replied_to_comments=%s" class="add-another" id="moderator_reply_comments_%s" onclick="return showAddAnotherPopup(this);">Add reply</a>' % (
                 add_icon,
                 reverse('admin:moderator_commentreply_add'),
                 obj.pk,
@@ -133,56 +173,23 @@ class CommentAdmin(DjangoCommentsAdmin):
     _user.short_description = 'User'
 
 
-class CommentProxyAdmin(CommentAdmin):
-    def queryset(self, request):
-        qs = super(CommentProxyAdmin, self).queryset(request)
-        return qs.filter(classifiedcomment__cls=self.cls, reply_comment_set__isnull=True)
-
-    def add_moderator_reply(self, modeladmin, request, queryset):
-        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
-        return HttpResponseRedirect(reverse('admin:moderator_commentreply_add') + '?replied_to_comment=%s' % ",".join(selected))
-    add_moderator_reply.short_description = "Add moderator reply"
-
-    def mark_spam(self, modeladmin, request, queryset):
-        for comment in queryset:
-            utils.classify_comment(comment, cls='spam')
-        self.message_user(request, "%s comment(s) successfully marked as spam." % queryset.count())
-    mark_spam.short_description = "Mark selected comments as spam"
-
-    def mark_ham(self, modeladmin, request, queryset):
-        for comment in queryset:
-            utils.classify_comment(comment, cls='ham')
-        self.message_user(request, "%s comment(s) successfully marked as ham." % queryset.count())
-    mark_ham.short_description = "Mark selected comments as ham"
-
-    def get_actions(self, request):
-        actions = {}
-        for action in self.actions:
-            actions[action] = (
-                getattr(self, action),
-                action,
-                getattr(self, action).short_description,
-            )
-        return actions
-
-
-class HamCommentAdmin(CommentProxyAdmin):
+class HamCommentAdmin(CommentAdmin):
     cls = 'ham'
     actions = ['add_moderator_reply', 'mark_spam', ]
     raw_id_fields = ('user', )
 
 
-class ReportedCommentAdmin(CommentProxyAdmin):
+class ReportedCommentAdmin(CommentAdmin):
     cls = 'reported'
     actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', ]
 
 
-class SpamCommentAdmin(CommentProxyAdmin):
+class SpamCommentAdmin(CommentAdmin):
     cls = 'spam'
     actions = ['mark_ham', ]
 
 
-class UnsureCommentAdmin(CommentProxyAdmin):
+class UnsureCommentAdmin(CommentAdmin):
     cls = 'unsure'
     actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', ]
 
