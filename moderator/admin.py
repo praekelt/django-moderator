@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template import defaultfilters
 from django.utils.decorators import method_decorator
@@ -116,7 +117,10 @@ class CommentAdmin(DjangoCommentsAdmin):
 
     def comment_text(self, obj):
         return '<a href="%s">%s</a>' % (
-            reverse('admin:comments_comment_change', args=(obj.id, )),
+            reverse(
+                'admin:%s_%s_change' % (obj._meta.app_label, obj._meta.module_name),
+                args=(obj.id, )
+            ),
             defaultfilters.linebreaks(obj.comment)
         )
     comment_text.short_description = 'Comment'
@@ -133,6 +137,11 @@ class CommentProxyAdmin(CommentAdmin):
     def queryset(self, request):
         qs = super(CommentProxyAdmin, self).queryset(request)
         return qs.filter(classifiedcomment__cls=self.cls, reply_comment_set__isnull=True)
+
+    def add_moderator_reply(self, modeladmin, request, queryset):
+        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        return HttpResponseRedirect(reverse('admin:moderator_commentreply_add') + '?replied_to_comment=%s' % ",".join(selected))
+    add_moderator_reply.short_description = "Add moderator reply"
 
     def mark_spam(self, modeladmin, request, queryset):
         for comment in queryset:
@@ -159,12 +168,13 @@ class CommentProxyAdmin(CommentAdmin):
 
 class HamCommentAdmin(CommentProxyAdmin):
     cls = 'ham'
-    actions = ['mark_spam', ]
+    actions = ['add_moderator_reply', 'mark_spam', ]
+    raw_id_fields = ('user', )
 
 
 class ReportedCommentAdmin(CommentProxyAdmin):
     cls = 'reported'
-    actions = ['mark_ham', 'mark_spam', ]
+    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', ]
 
 
 class SpamCommentAdmin(CommentProxyAdmin):
@@ -174,7 +184,7 @@ class SpamCommentAdmin(CommentProxyAdmin):
 
 class UnsureCommentAdmin(CommentProxyAdmin):
     cls = 'unsure'
-    actions = ['mark_ham', 'mark_spam', ]
+    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', ]
 
 
 class AdminModeratorMixin(object):
