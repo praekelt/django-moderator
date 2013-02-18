@@ -99,6 +99,13 @@ class CommentReply(models.Model):
             self.comment[:50]
         )
 
+    @property
+    def comment_text(self):
+        if self.canned_reply:
+            return self.canned_reply.comment
+        if self.comment:
+            return self.comment
+
 
 # Proxy models for admin display.
 class HamComment(Comment):
