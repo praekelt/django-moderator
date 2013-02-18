@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.0.8 (2013-02-18)
+------------------
+#. Admin speed optimizations.
+#. Add moderator reply admin action.
+
 0.0.7 (2013-01-28)
 ------------------
 #. Added moderate admin change view tool.
