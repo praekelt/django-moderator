@@ -65,6 +65,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         'submit_date',
     )
     actions = ['mark_spam', 'mark_ham', 'add_moderator_reply']
+    date_hierarchy  = None
 
     def queryset(self, request):
         """
@@ -132,11 +133,16 @@ class CommentAdmin(DjangoCommentsAdmin):
                 object (used in CommentAdmin.moderator_reply method)
                 """
                 super(ModeratorChangeList, self).get_results(request)
-                comment_ids = list(self.result_list.values_list('id', flat=True))
-                object_pks = list(self.result_list.values_list('object_pk', flat=True))
+                comment_ids = []
+                object_pks = []
+
+                results = list(self.result_list)
+                for obj in results:
+                    comment_ids.append(obj.id)
+                    object_pks.append(obj.object_pk)
 
                 ct_map = {}
-                for obj in self.result_list:
+                for obj in results:
                     if obj.content_type not in ct_map:
                         ct_map.setdefault(obj.content_type, {})
                         for content_obj in obj.content_type.model_class()._default_manager.filter(pk__in=object_pks):
