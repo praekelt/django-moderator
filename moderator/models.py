@@ -138,30 +138,25 @@ def comment_reply_pre_delete_handler(sender, instance, **kwargs):
 
 @receiver(m2m_changed, sender=CommentReply.replied_to_comments.through)
 def comment_reply_post_create_handler(sender, instance, action, model, pk_set, using, **kwargs):
-    for replied_to_comment in instance.replied_to_comments.all():
-        if instance.canned_reply:
-            comment_text = instance.canned_reply.comment
-        else:
-            comment_text = instance.comment
+    if action == 'post_add':
+        for replied_to_comment in instance.replied_to_comments.all():
+            comment_obj, created = Comment.objects.get_or_create(
+                    content_type=replied_to_comment.content_type,
+                    object_pk=replied_to_comment.object_pk,
+                    site=replied_to_comment.site,
+                    submit_date=replied_to_comment.submit_date +
+                    timedelta(seconds=1),
+                    user=instance.user,
+                    defaults={
+                        'comment': instance.comment_text,
+                    }
+                )
+            if not created:
+                comment_obj.comment = instance.comment_text
+                comment_obj.save()
 
-        #try:
-        #    reply_comment = instance.reply_comment
-        #    reply_comment.user = instance.user
-        #    reply_comment.comment = comment_text
-        #    reply_comment.save()
-        #except AttributeError, Comment.DoesNotExist:
-        instance.reply_comments.add(
-            Comment.objects.create(
-                comment=comment_text,
-                content_type=replied_to_comment.content_type,
-                object_pk=replied_to_comment.object_pk,
-                site=replied_to_comment.site,
-                submit_date=replied_to_comment.submit_date +
-                timedelta(seconds=1),
-                user=instance.user
-            )
-        )
-        #    instance.save()
+            if comment_obj not in instance.reply_comments.all():
+                instance.reply_comments.add(comment_obj)
 
 
 # Enable voting on Comments (for negative votes/reporting abuse).
