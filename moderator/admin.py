@@ -77,7 +77,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         cls = getattr(self, 'cls', None)
         if cls:
             qs = qs.filter(classifiedcomment__cls=self.cls)
-        return qs
+        return qs.select_related('user', 'content_type')
 
     def add_moderator_reply(self, modeladmin, request, queryset):
         selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
@@ -108,14 +108,13 @@ class CommentAdmin(DjangoCommentsAdmin):
         return actions
 
     def get_changelist(self, request):
-        """
-        Used by AdminModeratorMixin.moderate_view to somewhat hackishly limit comments to only those
-        for the object under review, but only if an obj attribute is found on request
-        (which means the mixin is being applied and we are not on the standard changelist_view).
-        """
-
         class ModeratorChangeList(ChangeList):
             def get_query_set(self, request):
+                """
+                Used by AdminModeratorMixin.moderate_view to somewhat hackishly limit comments to only those
+                for the object under review, but only if an obj attribute is found on request
+                (which means the mixin is being applied and we are not on the standard changelist_view).
+                """
                 qs = super(ModeratorChangeList, self).get_query_set(request)
                 obj = getattr(request, 'obj', None)
                 if obj:
@@ -123,11 +122,41 @@ class CommentAdmin(DjangoCommentsAdmin):
                     qs = qs.filter(content_type=ct, object_pk=obj.pk)
                 return qs
 
+            def get_results(self, request):
+                """
+                Create a content_type map to individual objects through their id's to avoid
+                additional per object queries for generic relation lookup (used in CommentAdmin.content
+                method).
+
+                Also create a comment_reply map to avoid additional reply lookups per comment
+                object (used in CommentAdmin.moderator_reply method)
+                """
+                super(ModeratorChangeList, self).get_results(request)
+                comment_ids = list(self.result_list.values_list('id', flat=True))
+                object_pks = list(self.result_list.values_list('object_pk', flat=True))
+
+                ct_map = {}
+                for obj in self.result_list:
+                    if obj.content_type not in ct_map:
+                        ct_map.setdefault(obj.content_type, {})
+                        for content_obj in obj.content_type.model_class()._default_manager.filter(pk__in=object_pks):
+                            ct_map[obj.content_type][content_obj.id] = content_obj
+                self.model_admin.ct_map = ct_map
+
+                comment_replies = {}
+                for comment_reply in models.CommentReply.objects.filter(replied_to_comments__in=comment_ids):
+                    for replied_to_comment in comment_reply.replied_to_comments.all():
+                        comment_replies[replied_to_comment.id] = {
+                            'id': comment_reply.id,
+                            'comment': comment_reply.comment_text,
+                        }
+                self.model_admin.comment_replies = comment_replies
+
         return ModeratorChangeList
 
-    def content(self, obj):
-        content = obj.content_object
+    def content(self, obj, *args, **kwargs):
         content_type = obj.content_type
+        content = self.ct_map[content_type][int(obj.object_pk)]
         url = reverse('admin:%s_%s_moderate' % (content_type.app_label,
                                               content_type.model),
                       args=(content.id,))
@@ -136,14 +165,13 @@ class CommentAdmin(DjangoCommentsAdmin):
     content.allow_tags = True
 
     def moderator_reply(self, obj):
-        replies = obj.replied_to_comments_set.all()
-        if replies:
-            reply = replies[0]
+        if obj.id in self.comment_replies:
+            reply = self.comment_replies[obj.id]
             change_icon = '<img src="%s" alt="change" />' % static('admin/img/icon_changelink.gif')
             return '%s <a href="%s" target="_blank">%s</a>' % (
                 change_icon,
-                reverse('admin:moderator_commentreply_change', args=(reply.id, )),
-                reply.comment
+                reverse('admin:moderator_commentreply_change', args=(reply['id'], )),
+                reply['comment']
             )
         else:
             add_icon = '<img src="%s" alt="add" />' % static('admin/img/icon_addlink.gif')
