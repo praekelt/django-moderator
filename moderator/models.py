@@ -140,6 +140,13 @@ def comment_reply_pre_delete_handler(sender, instance, **kwargs):
 def comment_reply_post_create_handler(sender, instance, action, model, pk_set, using, **kwargs):
     if action == 'post_add':
         for replied_to_comment in instance.replied_to_comments.all():
+            moderator_settings = getattr(settings, 'MODERATOR', None)
+            offset_timedelta = timedelta(seconds=1)
+            if moderator_settings:
+                if 'REPLY_BEFORE_COMMENT' in moderator_settings:
+                    if moderator_settings['REPLY_BEFORE_COMMENT']:
+                        offset_timedelta = timedelta(seconds=-1)
+
             created = False
             # We use try except DoesNotExist instead of get or create to
             # allow us to add a is_reply_comment to a newly created comment
@@ -150,8 +157,7 @@ def comment_reply_post_create_handler(sender, instance, action, model, pk_set, u
                     content_type=replied_to_comment.content_type,
                     object_pk=replied_to_comment.object_pk,
                     site=replied_to_comment.site,
-                    submit_date=replied_to_comment.submit_date +
-                    timedelta(seconds=1),
+                    submit_date=replied_to_comment.submit_date + offset_timedelta,
                     user=instance.user,
                 )
             except Comment.DoesNotExist:
@@ -159,8 +165,7 @@ def comment_reply_post_create_handler(sender, instance, action, model, pk_set, u
                     content_type=replied_to_comment.content_type,
                     object_pk=replied_to_comment.object_pk,
                     site=replied_to_comment.site,
-                    submit_date=replied_to_comment.submit_date +
-                    timedelta(seconds=1),
+                    submit_date=replied_to_comment.submit_date + offset_timedelta,
                     user=instance.user,
                     comment=instance.comment_text,
                 )
@@ -184,7 +189,6 @@ def realtime_comment_classifier(sender, instance, created, **kwargs):
     This behaviour is configurable by the REALTIME_CLASSIFICATION MODERATOR,
     default behaviour is to classify(True).
     """
-
     # Only classify if newly created.
     if created:
         moderator_settings = getattr(settings, 'MODERATOR', None)
