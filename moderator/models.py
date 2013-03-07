@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.comments.models import Comment
 from django.db import models
-from django.db.models.signals import m2m_changed, pre_delete
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from moderator import constants
 import secretballot
@@ -140,17 +140,34 @@ def comment_reply_pre_delete_handler(sender, instance, **kwargs):
 def comment_reply_post_create_handler(sender, instance, action, model, pk_set, using, **kwargs):
     if action == 'post_add':
         for replied_to_comment in instance.replied_to_comments.all():
-            comment_obj, created = Comment.objects.get_or_create(
+            created = False
+            # We use try except DoesNotExist instead of get or create to
+            # allow us to add a is_reply_comment to a newly created comment
+            # which facilitates realtime_comment_classifier below to distinguish
+            # between normal comments and reply comments.
+            try:
+                comment_obj = Comment.objects.get(
                     content_type=replied_to_comment.content_type,
                     object_pk=replied_to_comment.object_pk,
                     site=replied_to_comment.site,
                     submit_date=replied_to_comment.submit_date +
                     timedelta(seconds=1),
                     user=instance.user,
-                    defaults={
-                        'comment': instance.comment_text,
-                    }
                 )
+            except Comment.DoesNotExist:
+                comment_obj = Comment(
+                    content_type=replied_to_comment.content_type,
+                    object_pk=replied_to_comment.object_pk,
+                    site=replied_to_comment.site,
+                    submit_date=replied_to_comment.submit_date +
+                    timedelta(seconds=1),
+                    user=instance.user,
+                    comment=instance.comment_text,
+                )
+                comment_obj.is_reply_comment = True
+                comment_obj.save()
+                created = True
+
             if not created:
                 comment_obj.comment = instance.comment_text
                 comment_obj.save()
@@ -158,6 +175,28 @@ def comment_reply_post_create_handler(sender, instance, action, model, pk_set, u
             if comment_obj not in instance.reply_comments.all():
                 instance.reply_comments.add(comment_obj)
 
+
+@receiver(post_save, sender=Comment)
+def realtime_comment_classifier(sender, instance, created, **kwargs):
+    """
+    Classifies a comment after it has been created.
+
+    This behaviour is configurable by the REALTIME_CLASSIFICATION MODERATOR,
+    default behaviour is to classify(True).
+    """
+
+    # Only classify if newly created.
+    if created:
+        moderator_settings = getattr(settings, 'MODERATOR', None)
+        if moderator_settings:
+            if 'REALTIME_CLASSIFICATION' in moderator_settings:
+                if not moderator_settings['REALTIME_CLASSIFICATION']:
+                    return
+
+        # Only classify if not a reply comment.
+        if not getattr(instance, 'is_reply_comment', False):
+            from moderator.utils import classify_comment
+            classify_comment(instance)
 
 # Enable voting on Comments (for negative votes/reporting abuse).
 secretballot.enable_voting_on(Comment)
