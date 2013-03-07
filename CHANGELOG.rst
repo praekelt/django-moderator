@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.0 (2013-03-07)
+------------------
+#. Realtime classification option.
+#. Mark spam with reply action.
+#. Post replies before comment option.
+
 0.0.9 (2013-02-18)
 ------------------
 #. Further speed optimizations.
