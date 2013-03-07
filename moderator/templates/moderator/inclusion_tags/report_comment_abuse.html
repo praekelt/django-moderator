@@ -4,7 +4,7 @@
             {% if previously_reported %}
                 Abuse Reported
             {% else %}
-                <a class="reporter-comment-abuse" href="{% url like content_type content_obj.id -1 %}">Report Abuse</a>
+                <a class="reporter-comment-abuse" href="{% url like content_type content_obj.id vote %}">Report Abuse</a>
             {% endif %}
         </span>
     </div>
