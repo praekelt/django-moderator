@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.1.1 (2013-03-07)
+------------------
+#. Added elivated abuse reporting functionality.
+
 0.1.0 (2013-03-07)
 ------------------
 #. Realtime classification option.
