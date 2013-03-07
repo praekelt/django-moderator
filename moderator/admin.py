@@ -65,7 +65,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         'submit_date',
     )
     actions = ['mark_spam', 'mark_ham', 'add_moderator_reply']
-    date_hierarchy  = None
+    date_hierarchy = None
 
     def queryset(self, request):
         """
@@ -91,6 +91,11 @@ class CommentAdmin(DjangoCommentsAdmin):
             utils.classify_comment(comment, cls='spam')
         self.message_user(request, "%s comment(s) successfully marked as spam." % queryset.count())
     mark_spam.short_description = "Mark selected comments as spam"
+
+    def mark_spam_with_reply(self, modeladmin, request, queryset):
+        self.mark_spam(modeladmin, request, queryset)
+        return self.add_moderator_reply(modeladmin, request, queryset)
+    mark_spam_with_reply.short_description = "Mark selected comments as spam, replying at the same time."
 
     def mark_ham(self, modeladmin, request, queryset):
         for comment in queryset:
@@ -209,13 +214,13 @@ class CommentAdmin(DjangoCommentsAdmin):
 
 class HamCommentAdmin(CommentAdmin):
     cls = 'ham'
-    actions = ['add_moderator_reply', 'mark_spam', ]
+    actions = ['add_moderator_reply', 'mark_spam', 'mark_spam_with_reply', ]
     raw_id_fields = ('user', )
 
 
 class ReportedCommentAdmin(CommentAdmin):
     cls = 'reported'
-    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', ]
+    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', 'mark_spam_with_reply', ]
 
 
 class SpamCommentAdmin(CommentAdmin):
@@ -225,7 +230,7 @@ class SpamCommentAdmin(CommentAdmin):
 
 class UnsureCommentAdmin(CommentAdmin):
     cls = 'unsure'
-    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', ]
+    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', 'mark_spam_with_reply', ]
 
 
 class AdminModeratorMixin(object):
