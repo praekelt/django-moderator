@@ -40,6 +40,25 @@ Installation
 
 #. Optionally, if you want an additional **moderate** object tool on admin change views, configure ``django-apptemplates`` as described `here <http://pypi.python.org/pypi/django-apptemplates>`_ , include ``moderator`` as an ``INSTALLED_APP`` before ``django.contrib.admin`` and add ``moderator.admin.AdminModeratorMixin`` as a base class to those admin classes you want the tool available for.
 
+Additional Settings
+-------------------
+
+#. By default all comments are classifed as they are created. You can however disable this behaviour by specifying ``REALTIME_CLASSIFICATION`` as ``False``, i.e.::
+
+    MODERATOR = {
+        ...
+        'REALTIME_CLASSIFICATION': False,
+        ...
+    }
+
+#. By default moderator comment replies are posted chronologically **after** the comment being replied to. If however you need replies to be posted **before** the comment being replied to(for example if you display your comments reverse cronologically), you can specify ``REPLY_BEFORE_COMMENT`` as ``True``, i.e.::
+
+    MODERATOR = {
+        ...
+        'REPLY_BEFORE_COMMENT': True,
+        ...
+    }
+
 Classifier Storage Backends
 ---------------------------
 ``django-moderator`` includes two SpamBayes_ storage backends, ``moderator.storage.DjangoClassifier`` and ``moderator.storage.RedisClassifier`` respectively.
