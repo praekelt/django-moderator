@@ -203,4 +203,4 @@ def realtime_comment_classifier(sender, instance, created, **kwargs):
             classify_comment(instance)
 
 # Enable voting on Comments (for negative votes/reporting abuse).
-secretballot.enable_voting_on(Comment)
+# secretballot.enable_voting_on(Comment)
