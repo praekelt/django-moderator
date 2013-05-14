@@ -74,7 +74,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         For proxy models with cls apptribute limit comments to those classified as cls.
         """
         qs = super(CommentAdmin, self).queryset(request)
-        qs = qs.filter(user__is_staff=False)
+        qs = qs.filter(user__is_staff=False, is_removed=False)
         cls = getattr(self, 'cls', None)
         if cls:
             qs = qs.filter(classifiedcomment__cls=self.cls)
