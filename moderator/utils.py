@@ -4,10 +4,11 @@ from moderator.classifier import classifier
 from moderator.constants import DEFAULT_CONFIG
 from secretballot.models import Vote
 from moderator import models
+from unidecode import unidecode
 
 
 def train(comment, is_spam):
-    classifier.train(comment.comment, is_spam)
+    classifier.train(unidecode(comment.comment), is_spam)
     classifier.store()
 
 
@@ -20,7 +21,7 @@ def get_class(comment):
     Returns comment class as determined by Baysian classifier.
     """
     try:
-        score = classifier.score(comment.comment)
+        score = classifier.score(unidecode(comment.comment))
     except ZeroDivisionError:
         return 'unsure'
 
@@ -53,6 +54,10 @@ def classify_comment(comment, cls=None):
     Returns a newly created or updated ClassifiedComment object.
     As a side effect also sets is_removed field of comment based on class.
     """
+
+    #make sure non-ascii characters don't explode on us
+    comment = unidecode(comment)
+
     if cls not in ['spam', 'ham', 'unsure', 'reported', None]:
         raise Exception("Unrecognized classifications.")
 

@@ -17,6 +17,7 @@ setup(
         'django-likes>=0.0.6',
         'redis',
         'spambayes',
+        'unidecode',
     ],
     tests_require=[
         'fakeredis',
