@@ -54,10 +54,6 @@ def classify_comment(comment, cls=None):
     Returns a newly created or updated ClassifiedComment object.
     As a side effect also sets is_removed field of comment based on class.
     """
-
-    #make sure non-ascii characters don't explode on us
-    comment = unidecode(comment)
-
     if cls not in ['spam', 'ham', 'unsure', 'reported', None]:
         raise Exception("Unrecognized classifications.")
 
