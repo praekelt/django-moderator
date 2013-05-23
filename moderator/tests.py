@@ -411,6 +411,11 @@ class UtilsTestCase(TestCase):
             site_id=1,
             comment="abusive comment"
         )
+        non_ascii_comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment=u"[(\xc3_\xc3)] *KNOW YOUR STATUS*"
+        )
         for i in range(0, 3):
             Vote.objects.create(
                 content_type=ContentType.objects.get_for_model(Comment),
@@ -504,6 +509,8 @@ class UtilsTestCase(TestCase):
         # Should raise exception with unkown cls.
         self.assertRaises(Exception, self.utils.classify_comment,
                           unsure_comment, 'unknown_cls')
+
+        classified_comment = self.utils.classify_comment(spam_comment, 'spam')
 
 
 class InclusionTagsTestCase(TestCase):
