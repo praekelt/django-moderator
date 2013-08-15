@@ -29,7 +29,7 @@ def report_comment_abuse(context, obj):
             object_id=obj.id,
             token=request.secretballot_token,
             vote__in=[-1, -1 * abuse_cutoff]
-        ).count() != 0
+        ).exists()
 
     context.update({
         'content_obj': obj,
