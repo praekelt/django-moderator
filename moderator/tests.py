@@ -567,3 +567,18 @@ class InclusionTagsTestCase(TestCase):
             redirect_url='/',
             can_vote_test=can_vote_test
         )
+
+        self.assertEqual(Vote.objects.all().count(), 1)
+
+        #repeat votes should not count
+        views.vote(
+            request,
+            content_type='.'.join((comment._meta.app_label,
+                                   comment._meta.module_name)),
+            object_id=comment.id,
+            vote=-1,
+            redirect_url='/',
+            can_vote_test=can_vote_test
+        )
+
+        self.assertEqual(Vote.objects.all().count(), 1)
