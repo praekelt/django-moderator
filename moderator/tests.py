@@ -548,11 +548,6 @@ class InclusionTagsTestCase(TestCase):
             can_vote_test=can_vote_test
         )
 
-        # With having liked a comment nothing should be rendered.
-        out = Template("{% load moderator_inclusion_tags %}"
-                       "{% report_comment_abuse comment %}").render(context)
-        self.failUnlessEqual(out, '\n')
-
         # Reset previous like and test it applied.
         Vote.objects.all().delete()
 
@@ -572,8 +567,3 @@ class InclusionTagsTestCase(TestCase):
             redirect_url='/',
             can_vote_test=can_vote_test
         )
-
-        # With having reported abuse an acknowledgement should be rendered.
-        out = Template("{% load moderator_inclusion_tags %}"
-                       "{% report_comment_abuse comment %}").render(context)
-        self.failUnless('Abuse Reported' in out)
