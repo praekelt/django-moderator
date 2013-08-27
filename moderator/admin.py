@@ -48,7 +48,7 @@ class ClassifiedCommentInline(admin.StackedInline):
 
 class CommentAdmin(DjangoCommentsAdmin):
     list_display = ('comment_text', 'content', 'user', 'submit_date',
-                    'classification', 'moderator_replied',)
+                    'classification', 'moderator_replied', 'is_removed')
     list_filter = ('submit_date', ClassificationListFilter)
     inlines = [
         ClassifiedCommentInline,
