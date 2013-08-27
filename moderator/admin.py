@@ -63,6 +63,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         'content',
         '_user',
         'submit_date',
+        'is_removed',
     )
     actions = ['mark_spam', 'mark_ham', 'add_moderator_reply']
     date_hierarchy = None
