@@ -42,22 +42,6 @@ class ClassifiedComment(models.Model):
         return self.cls.title()
 
 
-class ClassifierState(models.Model):
-    """
-    Stores state (number of ham and spam trained) for classifier type.
-    """
-    spam_count = models.IntegerField()
-    ham_count = models.IntegerField()
-
-
-class Word(models.Model):
-    word = models.CharField(
-        max_length=128
-    )
-    spam_count = models.IntegerField()
-    ham_count = models.IntegerField()
-
-
 class CommentReply(models.Model):
     user = models.ForeignKey(
         'auth.User',
