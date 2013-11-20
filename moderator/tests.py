@@ -3,12 +3,10 @@ from unittest import TestCase
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.comments.models import Comment
 from django.contrib.contenttypes.models import ContentType
-from django.core import management
 from django.template import Template, Context
 from django.test.client import RequestFactory
 from likes.middleware import SecretBallotUserIpUseragentMiddleware
 from likes.views import can_vote_test
-from moderator.models import ClassifiedComment
 from secretballot import views
 from secretballot.models import Vote
 
