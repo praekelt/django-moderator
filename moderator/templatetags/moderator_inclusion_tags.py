@@ -1,8 +1,4 @@
 from django import template
-from django.conf import settings
-from likes.utils import can_vote
-from moderator.constants import DEFAULT_CONFIG
-from secretballot.models import Vote
 
 register = template.Library()
 

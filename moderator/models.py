@@ -5,7 +5,7 @@ from django.contrib.comments.models import Comment
 from django.db import models
 from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
-from moderator import constants
+from moderator.constants import CLASS_CHOICES
 import secretballot
 
 
@@ -32,7 +32,7 @@ class ClassifiedComment(models.Model):
     cls = models.CharField(
         'Class',
         max_length=64,
-        choices=constants.CLASS_CHOICES
+        choices=CLASS_CHOICES
     )
 
     class Meta:

@@ -47,6 +47,7 @@ def classify_comment(comment, cls=None):
         return classified_comment
 
     if cls is None:
+        cls = 'unsure'
         comment_content_type = ContentType.objects.get_for_model(comment)
         moderator_settings = getattr(settings, 'MODERATOR', DEFAULT_CONFIG)
         if Vote.objects.filter(
