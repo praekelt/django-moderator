@@ -122,7 +122,8 @@ def comment_reply_pre_delete_handler(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=CommentReply.replied_to_comments.through)
-def comment_reply_post_create_handler(sender, instance, action, model, pk_set, using, **kwargs):
+def comment_reply_post_create_handler(sender, instance, action, model, pk_set,
+    using, **kwargs):
     if action == 'post_add':
         for replied_to_comment in instance.replied_to_comments.all():
             moderator_settings = getattr(settings, 'MODERATOR', None)
@@ -186,6 +187,7 @@ def realtime_comment_classifier(sender, instance, created, **kwargs):
         if not getattr(instance, 'is_reply_comment', False):
             from moderator.utils import classify_comment
             classify_comment(instance)
+
 
 @receiver(object_liked)
 def flag_reported_comments(instance, request, **kwargs):

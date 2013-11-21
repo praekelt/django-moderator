@@ -4,6 +4,7 @@ from moderator.constants import DEFAULT_CONFIG
 from secretballot.models import Vote
 from moderator import models
 
+
 def classify_comment(comment, cls=None):
     """
     If 'reported' class is provided no training occures, the comment's class
@@ -16,7 +17,7 @@ def classify_comment(comment, cls=None):
     if cls not in ['spam', 'ham', 'unsure', 'reported', None]:
         raise Exception("Unrecognized classifications.")
 
-    classified_comment, created = models.ClassifiedComment.objects.get_or_create(
+    classified_comment, cr = models.ClassifiedComment.objects.get_or_create(
         comment=comment
     )
 
