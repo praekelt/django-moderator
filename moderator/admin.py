@@ -64,7 +64,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         '_user',
         'submit_date',
     )
-    actions = ['mark_spam', 'mark_ham', 'add_moderator_reply']
+    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', 'mark_spam_with_reply', ]
     date_hierarchy = None
 
     def queryset(self, request):

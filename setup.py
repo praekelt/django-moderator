@@ -18,6 +18,7 @@ setup(
         'redis',
         'spambayes',
         'unidecode',
+        'django-celery',
     ],
     tests_require=[
         'fakeredis',

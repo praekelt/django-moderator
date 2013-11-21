@@ -5,7 +5,8 @@ from django.contrib.comments.models import Comment
 from django.db import models
 from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
-from moderator import constants
+from moderator.constants import CLASS_CHOICES
+from likes.signals import object_liked
 import secretballot
 
 
@@ -32,7 +33,7 @@ class ClassifiedComment(models.Model):
     cls = models.CharField(
         'Class',
         max_length=64,
-        choices=constants.CLASS_CHOICES
+        choices=CLASS_CHOICES
     )
 
     class Meta:
@@ -40,22 +41,6 @@ class ClassifiedComment(models.Model):
 
     def __unicode__(self):
         return self.cls.title()
-
-
-class ClassifierState(models.Model):
-    """
-    Stores state (number of ham and spam trained) for classifier type.
-    """
-    spam_count = models.IntegerField()
-    ham_count = models.IntegerField()
-
-
-class Word(models.Model):
-    word = models.CharField(
-        max_length=128
-    )
-    spam_count = models.IntegerField()
-    ham_count = models.IntegerField()
 
 
 class CommentReply(models.Model):
@@ -137,7 +122,8 @@ def comment_reply_pre_delete_handler(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=CommentReply.replied_to_comments.through)
-def comment_reply_post_create_handler(sender, instance, action, model, pk_set, using, **kwargs):
+def comment_reply_post_create_handler(sender, instance, action, model, pk_set,
+    using, **kwargs):
     if action == 'post_add':
         for replied_to_comment in instance.replied_to_comments.all():
             moderator_settings = getattr(settings, 'MODERATOR', None)
@@ -201,6 +187,14 @@ def realtime_comment_classifier(sender, instance, created, **kwargs):
         if not getattr(instance, 'is_reply_comment', False):
             from moderator.utils import classify_comment
             classify_comment(instance)
+
+
+@receiver(object_liked)
+def flag_reported_comments(instance, request, **kwargs):
+    if not getattr(instance, 'is_reply_comment', False):
+        from moderator.tasks import flag_reported_comments_task
+        flag_reported_comments_task.delay(instance)
+
 
 # Enable voting on Comments (for negative votes/reporting abuse).
 secretballot.enable_voting_on(Comment)
