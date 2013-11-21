@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from moderator.constants import CLASS_CHOICES
+from likes.signals import object_liked
 import secretballot
 
 
@@ -185,6 +186,13 @@ def realtime_comment_classifier(sender, instance, created, **kwargs):
         if not getattr(instance, 'is_reply_comment', False):
             from moderator.utils import classify_comment
             classify_comment(instance)
+
+@receiver(object_liked)
+def flag_reported_comments(instance, request, **kwargs):
+    if not getattr(instance, 'is_reply_comment', False):
+        from moderator.tasks import flag_reported_comments_task
+        flag_reported_comments_task.delay(instance)
+
 
 # Enable voting on Comments (for negative votes/reporting abuse).
 secretballot.enable_voting_on(Comment)

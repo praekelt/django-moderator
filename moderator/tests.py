@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.template import Template, Context
 from django.test.client import RequestFactory
 from likes.middleware import SecretBallotUserIpUseragentMiddleware
-from likes.views import can_vote_test
+from likes.views import can_vote_test, like
 from secretballot import views
 from secretballot.models import Vote
 
@@ -243,3 +243,61 @@ class InclusionTagsTestCase(TestCase):
         )
 
         self.assertEqual(Vote.objects.all().count(), 1)
+
+    def test_report_comment_abuse_signal(self):
+        # Prepare context.
+        context = Context()
+        request = RequestFactory().get('/')
+        request.user = AnonymousUser()
+        request.META['HTTP_REFERER'] = '/'
+        request.META['HTTP_USER_AGENT'] = 'testing_agent'
+        request.secretballot_token = SecretBallotUserIpUseragentMiddleware().\
+            generate_token(request)
+        comment = Comment.objects.create(
+            content_type_id=1,
+            site_id=1,
+            comment="abuse report testing comment"
+        )
+        context['request'] = request
+        context['comment'] = comment
+        content_type = '-'.join((comment._meta.app_label,
+                                 comment._meta.module_name))
+
+        # Reset previous like and test it applied.
+        Vote.objects.all().delete()
+
+        # Report an abuse comment - 1st
+        like(
+            request,
+            content_type=content_type,
+            id=comment.id,
+            vote=-1
+        )
+        self.assertEqual(Vote.objects.all().count(), 1)
+        self.failIf(Comment.objects.get(pk=comment.pk).is_removed)
+
+        # Report an abuse comment - 2nd
+        request.META['HTTP_USER_AGENT'] = 'testing_agent_2'
+        request.secretballot_token = SecretBallotUserIpUseragentMiddleware().\
+            generate_token(request)
+        like(
+            request,
+            content_type=content_type,
+            id=comment.id,
+            vote=-1,
+        )
+        self.assertEqual(Vote.objects.all().count(), 2)
+        self.failIf(Comment.objects.get(pk=comment.pk).is_removed)
+
+        # Report an abuse comment - 3rd
+        request.META['HTTP_USER_AGENT'] = 'testing_agent_3'
+        request.secretballot_token = SecretBallotUserIpUseragentMiddleware().\
+            generate_token(request)
+        like(
+            request,
+            content_type=content_type,
+            id=comment.id,
+            vote=-1,
+        )
+        self.assertEqual(Vote.objects.all().count(), 3)
+        self.failUnless(Comment.objects.get(pk=comment.pk).is_removed)

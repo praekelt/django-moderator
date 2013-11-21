@@ -1,7 +1,10 @@
+import djcelery
+djcelery.setup_loader()
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'test.sqlite', 
+        'NAME': 'test.sqlite',
     }
 }
 
@@ -13,6 +16,7 @@ INSTALLED_APPS = (
     'secretballot',
 
     'moderator',
+    'djcelery',
 )
 
 MODERATOR = {
@@ -23,3 +27,6 @@ MODERATOR = {
 }
 
 ROOT_URLCONF = 'test_urls'
+
+CELERY_IMPORTS = ('moderator.tasks', )
+CELERY_ALWAYS_EAGER = True
