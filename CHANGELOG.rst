@@ -1,6 +1,18 @@
 Changelog
 =========
 
+1.0.1 (2013-11-22)
+------------------
+#. Fix canned responses showing for all sites and not just selected site
+
+1.0.0 (2013-11-21)
+------------------
+#. *MAJOR* Remove Bayesian filtering. Only rely on manual moderation and user abuse reports
+
+0.1.4 (2013-08-23)
+------------------
+#. Remove check for abuse previously reported.
+
 0.1.3 (2013-03-07)
 ------------------
 #. Include fixtures.
