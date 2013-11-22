@@ -24,28 +24,24 @@ class CannedReplyAdmin(admin.ModelAdmin):
     list_filter = ('site', )
 
 
-class CommentReplyInline(admin.StackedInline):
-    extra = 1
-    exclude = ['reply_comments', ]
-    model = models.CommentReply
+class CommentReplyAdmin(admin.ModelAdmin):
+    raw_id_fields = ("replied_to_comments", )
+    exclude = ("reply_comments", )
     fk_name = 'replied_to_comments'
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         """
         Limit canned reply options to those with same site as comment.
         """
-        field = super(CommentReplyInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        field = super(CommentReplyAdmin, self).\
+            formfield_for_foreignkey(db_field, request, **kwargs)
+        comment_id = request.GET.get(self.fk_name, None)
 
-        if db_field.name == 'canned_reply':
-            comment_site = Comment.objects.get(id=request.path.split('/')[-2]).site
-            field.queryset = field.queryset.filter(Q(site=comment_site) | Q(site__isnull=True))
-
+        if db_field.name == 'canned_reply' and comment_id:
+            comment_site = Comment.objects.get(id=comment_id).site
+            field.queryset = field.queryset.filter(Q(site=comment_site) |
+                                                   Q(site__isnull=True))
         return field
-
-
-class CommentReplyAdmin(admin.ModelAdmin):
-    raw_id_fields = ("replied_to_comments", )
-    exclude = ("reply_comments", )
 
     def response_add(self, request, obj, post_url_continue=None):
         if 'admin_redirect' in request.session:
