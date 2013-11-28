@@ -191,7 +191,8 @@ def realtime_comment_classifier(sender, instance, created, **kwargs):
 
 @receiver(object_liked)
 def flag_reported_comments(instance, request, **kwargs):
-    if not getattr(instance, 'is_reply_comment', False):
+    if not getattr(instance, 'is_reply_comment', False) and\
+        isinstance(instance, Comment):
         from moderator.tasks import flag_reported_comments_task
         flag_reported_comments_task.delay(instance)
 
