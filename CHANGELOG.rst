@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.2 (2013-11-28)
+------------------
+#. Only report abuse for comments
+
 1.0.1 (2013-11-22)
 ------------------
 #. Fix canned responses showing for all sites and not just selected site
