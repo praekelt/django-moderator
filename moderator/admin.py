@@ -38,8 +38,11 @@ class CommentReplyAdmin(admin.ModelAdmin):
         comment_id = request.GET.get(self.fk_name, None)
 
         if db_field.name == 'canned_reply' and comment_id:
-            comment_site = Comment.objects.get(id=comment_id).site
-            field.queryset = field.queryset.filter(Q(site=comment_site) |
+            comment_id = comment_id.split(',')
+            comment_sites = Comment.objects.filter(id__in=comment_id)\
+                                           .values('site')\
+                                           .distinct()
+            field.queryset = field.queryset.filter(Q(site__in=comment_sites) |
                                                    Q(site__isnull=True))
         return field
 
