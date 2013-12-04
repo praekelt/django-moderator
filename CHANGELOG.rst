@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.3 (2013-12-04)
+------------------
+#. Fixed error when selecting multiple comments for replying in admin
+
 1.0.2 (2013-11-28)
 ------------------
 #. Only report abuse for comments
