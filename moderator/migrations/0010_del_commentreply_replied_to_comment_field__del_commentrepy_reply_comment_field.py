@@ -8,22 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding M2M table for field replied_to_comment on 'CommentReply'
-        db.create_table('moderator_commentreply_replied_to_comment', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('commentreply', models.ForeignKey(orm['moderator.commentreply'], null=False)),
-            ('comment', models.ForeignKey(orm['comments.comment'], null=False))
-        ))
-        db.create_unique('moderator_commentreply_replied_to_comment', ['commentreply_id', 'comment_id'])
+        # Deleting field 'CommentReply.replied_to_comment'
+        db.delete_column('moderator_commentreply', 'replied_to_comment_id')
 
+        # Deleting field 'CommentReply.reply_comment'
+        db.delete_column('moderator_commentreply', 'reply_comment_id')
 
     def backwards(self, orm):
-
-        # User chose to not deal with backwards NULL issues for 'CommentReply.replied_to_comment'
-        raise RuntimeError("Cannot reverse this migration. 'CommentReply.replied_to_comment' and its values cannot be restored.")
-        # Removing M2M table for field replied_to_comment on 'CommentReply'
-        db.delete_table('moderator_commentreply_replied_to_comment')
-
+        pass
 
     models = {
         'auth.group': {
@@ -90,27 +82,14 @@ class Migration(SchemaMigration):
             'comment': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['comments.Comment']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'moderator.classifierstate': {
-            'Meta': {'object_name': 'ClassifierState'},
-            'ham_count': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'spam_count': ('django.db.models.fields.IntegerField', [], {})
-        },
         'moderator.commentreply': {
             'Meta': {'object_name': 'CommentReply'},
             'canned_reply': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['moderator.CannedReply']", 'null': 'True', 'blank': 'True'}),
             'comment': ('django.db.models.fields.TextField', [], {'max_length': '3000', 'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'replied_to_comment': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'replied_to_comment_set'", 'symmetrical': 'False', 'to': "orm['comments.Comment']"}),
-            'reply_comment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'reply_comment_set'", 'to': "orm['comments.Comment']"}),
+            'replied_to_comments': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'replied_to_comments_set'", 'symmetrical': 'False', 'to': "orm['comments.Comment']"}),
+            'reply_comments': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'reply_comments_set'", 'null': 'True', 'symmetrical': 'False', 'to': "orm['comments.Comment']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
-        },
-        'moderator.word': {
-            'Meta': {'object_name': 'Word'},
-            'ham_count': ('django.db.models.fields.IntegerField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'spam_count': ('django.db.models.fields.IntegerField', [], {}),
-            'word': ('django.db.models.fields.CharField', [], {'max_length': '128'})
         },
         'secretballot.vote': {
             'Meta': {'unique_together': "(('token', 'content_type', 'object_id'),)", 'object_name': 'Vote'},

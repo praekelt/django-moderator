@@ -8,9 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting field 'CommentReply.reply_comment'
-        db.delete_column('moderator_commentreply', 'reply_comment_id')
-
         # Adding field 'CommentReply.reply_comments'
         db.add_column('moderator_commentreply', 'reply_comments',
                       self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='reply_comments_set', null=True, to=orm['comments.Comment']),
