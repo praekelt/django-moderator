@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.6 (2014-01-15)
+------------------
+#. Fix migrations - ensure comment replies are not lost
+
 1.0.5 (2014-01-15)
 ------------------
 #. Set current user as the default user for CommentReply
