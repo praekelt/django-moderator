@@ -25,9 +25,14 @@ class CannedReplyAdmin(admin.ModelAdmin):
 
 
 class CommentReplyAdmin(admin.ModelAdmin):
-    raw_id_fields = ("replied_to_comments", )
-    exclude = ("reply_comments", )
+    raw_id_fields = ("replied_to_comments", "reply_comments")
+    exclude = ['user']
     fk_name = 'replied_to_comments'
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.user = request.user
+        obj.save()
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         """
