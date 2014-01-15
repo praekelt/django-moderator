@@ -25,9 +25,14 @@ class CannedReplyAdmin(admin.ModelAdmin):
 
 
 class CommentReplyAdmin(admin.ModelAdmin):
-    raw_id_fields = ("replied_to_comments", )
-    exclude = ("reply_comments", )
+    raw_id_fields = ("replied_to_comments", "reply_comments")
+    exclude = ['user']
     fk_name = 'replied_to_comments'
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.user = request.user
+        obj.save()
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         """
@@ -52,7 +57,11 @@ class CommentReplyAdmin(admin.ModelAdmin):
             del request.session["admin_redirect"]
             return HttpResponseRedirect(redirect)
         else:
-            return super(CommentReplyAdmin, self).response_add(request, obj, post_url_continue)
+            return super(CommentReplyAdmin, self).response_add(
+                request,
+                obj,
+                post_url_continue
+            )
 
 
 class CommentAdmin(DjangoCommentsAdmin):
@@ -63,17 +72,28 @@ class CommentAdmin(DjangoCommentsAdmin):
         '_user',
         'submit_date',
     )
-    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', 'mark_spam_with_reply', ]
+    actions = [
+        'add_moderator_reply',
+        'mark_ham',
+        'mark_spam',
+        'mark_spam_with_reply',
+    ]
+
     date_hierarchy = None
 
     def queryset(self, request):
         """
-        Exclude replies from listing since they are displayed inline as part of listing.
+        Exclude replies from listing since they are displayed inline as part of
+        listing.
 
-        For proxy models with cls apptribute limit comments to those classified as cls.
+        For proxy models with cls apptribute limit comments to those classified
+        as cls.
         """
         qs = super(CommentAdmin, self).queryset(request)
-        qs = qs.filter(Q(user__is_staff=False) | Q(user__isnull=True), is_removed=False)
+        qs = qs.filter(
+            Q(user__is_staff=False) | Q(user__isnull=True),
+            is_removed=False
+        )
         cls = getattr(self, 'cls', None)
         if cls:
             qs = qs.filter(classifiedcomment__cls=self.cls)
@@ -82,13 +102,19 @@ class CommentAdmin(DjangoCommentsAdmin):
     def add_moderator_reply(self, modeladmin, request, queryset):
         selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
         request.session["admin_redirect"] = request.get_full_path()
-        return HttpResponseRedirect(reverse('admin:moderator_commentreply_add') + '?replied_to_comments=%s' % ",".join(selected))
+        return HttpResponseRedirect(
+            reverse('admin:moderator_commentreply_add') +
+            '?replied_to_comments=%s' % ",".join(selected)
+        )
     add_moderator_reply.short_description = "Add moderator reply"
 
     def mark_spam(self, modeladmin, request, queryset):
         for comment in queryset:
             utils.classify_comment(comment, cls='spam')
-        self.message_user(request, "%s comment(s) successfully marked as spam." % queryset.count())
+        self.message_user(
+            request,
+            "%s comment(s) successfully marked as spam." % queryset.count()
+        )
     mark_spam.short_description = "Mark selected comments as spam"
 
     def mark_spam_with_reply(self, modeladmin, request, queryset):
@@ -99,7 +125,10 @@ class CommentAdmin(DjangoCommentsAdmin):
     def mark_ham(self, modeladmin, request, queryset):
         for comment in queryset:
             utils.classify_comment(comment, cls='ham')
-        self.message_user(request, "%s comment(s) successfully marked as ham." % queryset.count())
+        self.message_user(
+            request,
+            "%s comment(s) successfully marked as ham." % queryset.count()
+        )
     mark_ham.short_description = "Mark selected comments as ham"
 
     def get_actions(self, request):
@@ -116,9 +145,11 @@ class CommentAdmin(DjangoCommentsAdmin):
         class ModeratorChangeList(ChangeList):
             def get_query_set(self, request):
                 """
-                Used by AdminModeratorMixin.moderate_view to somewhat hackishly limit comments to only those
-                for the object under review, but only if an obj attribute is found on request
-                (which means the mixin is being applied and we are not on the standard changelist_view).
+                Used by AdminModeratorMixin.moderate_view to somewhat hackishly
+                limit comments to only those for the object under review, but
+                only if an obj attribute is found on request (which means the
+                mixin is being applied and we are not on the standard
+                changelist_view).
                 """
                 qs = super(ModeratorChangeList, self).get_query_set(request)
                 obj = getattr(request, 'obj', None)
@@ -129,12 +160,13 @@ class CommentAdmin(DjangoCommentsAdmin):
 
             def get_results(self, request):
                 """
-                Create a content_type map to individual objects through their id's to avoid
-                additional per object queries for generic relation lookup (used in CommentAdmin.content
-                method).
+                Create a content_type map to individual objects through their
+                id's to avoid additional per object queries for generic
+                relation lookup (used in CommentAdmin.content method).
 
-                Also create a comment_reply map to avoid additional reply lookups per comment
-                object (used in CommentAdmin.moderator_reply method)
+                Also create a comment_reply map to avoid additional reply
+                lookups per comment object
+                (used in CommentAdmin.moderator_reply method)
                 """
                 super(ModeratorChangeList, self).get_results(request)
                 comment_ids = []
@@ -167,9 +199,10 @@ class CommentAdmin(DjangoCommentsAdmin):
     def content(self, obj, *args, **kwargs):
         content_type = obj.content_type
         content = self.ct_map[content_type][int(obj.object_pk)]
-        url = reverse('admin:%s_%s_moderate' % (content_type.app_label,
-                                              content_type.model),
-                      args=(content.id,))
+        url = reverse('admin:%s_%s_moderate' % (
+            content_type.app_label,
+            content_type.model
+        ), args=(content.id,))
 
         return '<a href="%s">%s</a>' % (url, content)
     content.allow_tags = True
@@ -180,7 +213,10 @@ class CommentAdmin(DjangoCommentsAdmin):
             change_icon = '<img src="%s" alt="change" />' % static('admin/img/icon_changelink.gif')
             return '%s <a href="%s" target="_blank">%s</a>' % (
                 change_icon,
-                reverse('admin:moderator_commentreply_change', args=(reply['id'], )),
+                reverse(
+                    'admin:moderator_commentreply_change',
+                    args=(reply['id'], )
+                ),
                 reply['comment']
             )
         else:
@@ -196,7 +232,10 @@ class CommentAdmin(DjangoCommentsAdmin):
     def comment_text(self, obj):
         return '<a href="%s">%s</a>' % (
             reverse(
-                'admin:%s_%s_change' % (obj._meta.app_label, obj._meta.module_name),
+                'admin:%s_%s_change' % (
+                    obj._meta.app_label,
+                    obj._meta.module_name
+                ),
                 args=(obj.id, )
             ),
             defaultfilters.linebreaks(obj.comment)
@@ -219,7 +258,12 @@ class HamCommentAdmin(CommentAdmin):
 
 class ReportedCommentAdmin(CommentAdmin):
     cls = 'reported'
-    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', 'mark_spam_with_reply', ]
+    actions = [
+        'add_moderator_reply',
+        'mark_ham',
+        'mark_spam',
+        'mark_spam_with_reply',
+    ]
 
 
 class SpamCommentAdmin(CommentAdmin):
@@ -229,7 +273,12 @@ class SpamCommentAdmin(CommentAdmin):
 
 class UnsureCommentAdmin(CommentAdmin):
     cls = 'unsure'
-    actions = ['add_moderator_reply', 'mark_ham', 'mark_spam', 'mark_spam_with_reply', ]
+    actions = [
+        'add_moderator_reply',
+        'mark_ham',
+        'mark_spam',
+        'mark_spam_with_reply',
+    ]
 
 
 class AdminModeratorMixin(object):
@@ -258,7 +307,8 @@ class AdminModeratorMixin(object):
         from django.conf.urls import patterns, url
         urls = super(AdminModeratorMixin, self).get_urls()
         info = self.model._meta.app_label, self.model._meta.module_name
-        return patterns('',
+        return patterns(
+            '',
             url(r'^(.+)/moderate/$',
                 self.admin_site.admin_view(self.moderate_view),
                 name='%s_%s_moderate' % info),
