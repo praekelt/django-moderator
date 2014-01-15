@@ -1,5 +1,12 @@
 Changelog
 =========
+1.0.5 (2014-01-15)
+------------------
+#. Set current user as the default user for CommentReply
+
+1.0.4 (2014-01-14)
+------------------
+#. Remove dependency to spambayes (redundant)
 
 1.0.3 (2013-12-04)
 ------------------
