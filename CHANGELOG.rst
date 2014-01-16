@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.7 (2014-01-16)
+------------------
+#. Ensure reported comments are listed in admin
+
 1.0.6 (2014-01-15)
 ------------------
 #. Fix migrations - ensure comment replies are not lost
