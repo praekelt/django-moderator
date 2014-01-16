@@ -265,6 +265,13 @@ class ReportedCommentAdmin(CommentAdmin):
         'mark_spam_with_reply',
     ]
 
+    def queryset(self, request):
+        qs = super(CommentAdmin, self).queryset(request)
+        qs = qs.filter(
+            Q(user__is_staff=False) | Q(user__isnull=True)
+        ).filter(classifiedcomment__cls=self.cls)
+        return qs.select_related('user', 'content_type')
+
 
 class SpamCommentAdmin(CommentAdmin):
     cls = 'spam'
