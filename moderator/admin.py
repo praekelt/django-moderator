@@ -245,9 +245,24 @@ class CommentAdmin(DjangoCommentsAdmin):
 
     def _user(self, obj):
         url = reverse('admin:auth_user_change', args=(obj.user.id,))
-        return '<a href="%s">%s</a>' % (url, obj.user)
+        return '<a href="%s?user=%s">%s</a>' % (
+            reverse(
+                'admin:%s_%s_changelist' % (
+                    obj._meta.app_label,
+                    obj._meta.module_name
+                ),
+            ),
+            obj.user.id,
+            self.get_user_display_name()
+        ) + ' (<a href="%s">edit</a>)' % url
     _user.allow_tags = True
     _user.short_description = 'User'
+
+    def get_user_display_name(self, obj):
+        '''
+        Allow apps to override the name displayed in the admin
+        '''
+        return obj.user
 
 
 class HamCommentAdmin(CommentAdmin):
