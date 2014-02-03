@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.8 (2014-02-03)
+------------------
+#. Allow filtering of comments by username
+
 1.0.7 (2014-01-16)
 ------------------
 #. Ensure reported comments are listed in admin
