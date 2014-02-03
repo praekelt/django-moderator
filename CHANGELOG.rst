@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.9 (2014-02-03)
+------------------
+#. Allow filtering of comments by username - fix param error
+
 1.0.8 (2014-02-03)
 ------------------
 #. Allow filtering of comments by username
