@@ -253,7 +253,7 @@ class CommentAdmin(DjangoCommentsAdmin):
                 ),
             ),
             obj.user.id,
-            self.get_user_display_name()
+            self.get_user_display_name(obj)
         ) + ' (<a href="%s">edit</a>)' % url
     _user.allow_tags = True
     _user.short_description = 'User'
