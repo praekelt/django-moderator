@@ -25,6 +25,7 @@ class CannedReplyAdmin(admin.ModelAdmin):
 
 
 class CommentReplyAdmin(admin.ModelAdmin):
+    list_display = ('comment_text', 'user')
     raw_id_fields = ("replied_to_comments", "reply_comments")
     exclude = ['user']
     fk_name = 'replied_to_comments'
@@ -291,6 +292,13 @@ class ReportedCommentAdmin(CommentAdmin):
 class SpamCommentAdmin(CommentAdmin):
     cls = 'spam'
     actions = ['mark_ham', ]
+
+    def queryset(self, request):
+        qs = super(CommentAdmin, self).queryset(request)
+        qs = qs.filter(
+            Q(user__is_staff=False) | Q(user__isnull=True)
+        ).filter(classifiedcomment__cls=self.cls)
+        return qs.select_related('user', 'content_type')
 
 
 class UnsureCommentAdmin(CommentAdmin):
