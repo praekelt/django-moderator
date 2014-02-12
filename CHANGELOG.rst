@@ -1,5 +1,9 @@
 Changelog
 =========
+1.1.0 (2014-02-12)
+------------------
+#. Ensure spam comments are listed in SpamComments
+
 1.0.9 (2014-02-03)
 ------------------
 #. Allow filtering of comments by username - fix param error
