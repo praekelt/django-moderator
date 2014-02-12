@@ -4,7 +4,6 @@ Changelog
 ------------------
 #. Show is removed column  in comments
 
-=========
 1.1.0 (2014-02-12)
 ------------------
 #. Ensure spam comments are listed in SpamComments
