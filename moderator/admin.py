@@ -71,6 +71,7 @@ class CommentAdmin(DjangoCommentsAdmin):
         'moderator_reply',
         'content',
         '_user',
+        'is_removed',
         'submit_date',
     )
     actions = [
