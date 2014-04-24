@@ -1,5 +1,9 @@
 Changelog
 =========
+1.1.2 (2014-04-24)
+------------------
+#. Ensure SecretBallot doesn't override default manager for Comments
+
 1.1.1 (2014-02-12)
 ------------------
 #. Show is removed column  in comments
