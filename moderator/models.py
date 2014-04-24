@@ -198,4 +198,4 @@ def flag_reported_comments(instance, request, **kwargs):
 
 
 # Enable voting on Comments (for negative votes/reporting abuse).
-secretballot.enable_voting_on(Comment)
+secretballot.enable_voting_on(Comment, 'objects_with_votes')
