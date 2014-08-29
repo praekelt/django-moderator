@@ -200,7 +200,10 @@ class CommentAdmin(DjangoCommentsAdmin):
 
     def content(self, obj, *args, **kwargs):
         content_type = obj.content_type
-        content = self.ct_map[content_type][int(obj.object_pk)]
+        if not int(obj.object_pk) in self.ct_map[content_type]:
+            content = obj
+        else:
+            content = self.ct_map[content_type][int(obj.object_pk)]
         url = reverse('admin:%s_%s_moderate' % (
             content_type.app_label,
             content_type.model
