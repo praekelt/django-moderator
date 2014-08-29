@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-moderator',
-    version='1.1.2',
+    version='1.1.3',
     description='Django Bayesian inference based comment moderation app.',
     long_description=open('README.rst', 'r').read() + open('AUTHORS.rst', 'r').read() + open('CHANGELOG.rst', 'r').read(),
     author='Praekelt Foundation',
