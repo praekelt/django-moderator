@@ -1,5 +1,9 @@
 Changelog
 =========
+1.1.3 (2014-08-29)
+------------------
+#. Ensure admin doesn't break when content_type not match
+
 1.1.2 (2014-04-24)
 ------------------
 #. Ensure SecretBallot doesn't override default manager for Comments
